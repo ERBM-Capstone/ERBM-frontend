@@ -1,0 +1,3 @@
+interface:
+  display_name: "ERBM Frontend Authentication"
+  short_description: "ERBM login, activation, sessions, and role-aware UI"
