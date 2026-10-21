@@ -1,6 +1,54 @@
 @import "tailwindcss";
 
 @theme {
+  /* --- Base --- */
+  --color-surface: #FFFFFF;
+  --color-accent: #3E4784;
+  --color-accent-hover: #3E4784;
+  --color-accent-soft: #EEF3FF;
+  --color-danger: #D92D20;
+  --color-warning: #DC6803;
+  --color-border: #E4E7EC;
+  --color-processing: #7F56D9;
+  --color-success: #079455;
+
+  /* --- Background --- */
+  --color-bg-page: #F8F9FA;
+  --color-bg-button: #4E5BA6;
+
+  /* --- Text --- */
+  --color-text-primary: #1D2939;
+  --color-text-secondary: #667085;
+
+  /* --- Status: Draft --- */
+  --color-status-draft-bg: #F1F2F5;
+  --color-status-draft-text: #5B6270;
+
+  /* --- Status: Pending PM Approval --- */
+  --color-status-pending-bg: #FDF3E2;
+  --color-status-pending-text: #A86A00;
+
+  /* --- Status: Returned for Revision --- */
+  --color-status-return-bg: #FBEAEA;
+  --color-status-return-text: #B83232;
+
+  /* --- Status: Approved --- */
+  --color-status-approve-bg: #E5F1FD;
+  --color-status-approve-text: #1D6FB8;
+
+  /* --- Status: Active --- */
+  --color-status-active-bg: #E6F7EF;
+  --color-status-active-text: #14804F;
+
+  /* --- Status: Closing --- */
+  --color-status-closing-bg: #F1ECFD;
+  --color-status-closing-text: #6D3FC4;
+
+  /* --- Status: Closed --- */
+  --color-status-closed-bg: #E8EAEE;
+  --color-status-closed-text: #3E4452;
+
+  /* --- Legacy aliases (btn colors used before Figma sync) --- */
   --color-brand: #4E5BA6;
   --color-brand-hover: #3d4a8f;
 }
