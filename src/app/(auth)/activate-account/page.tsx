@@ -3,9 +3,6 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
 
-const BTN_COLOR = "#4E5BA6";
-const BTN_HOVER = "#3d4a8f";
-
 type PageState =
   | { kind: "ready"; token: string }
   | { kind: "invalid" }
@@ -24,7 +21,6 @@ function ActivateAccountForm() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [hovered, setHovered] = useState(false);
 
   function resolveState(): PageState {
     if (submitted) return submitted;
@@ -82,8 +78,7 @@ function ActivateAccountForm() {
         </div>
         <button
           onClick={() => router.replace("/login")}
-          style={{ backgroundColor: BTN_COLOR }}
-          className="w-full rounded-lg px-4 py-2.5 text-sm font-medium text-white transition focus:outline-none focus:ring-2 focus:ring-zinc-900/30"
+          className="w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-white transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-zinc-900/30"
         >
           ไปยังหน้าเข้าสู่ระบบ
         </button>
@@ -151,10 +146,7 @@ function ActivateAccountForm() {
       <button
         type="submit"
         disabled={isSubmitting || !password || !confirm}
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-        style={{ backgroundColor: hovered && !isSubmitting ? BTN_HOVER : BTN_COLOR }}
-        className="w-full rounded-lg px-4 py-2.5 text-sm font-medium text-white transition focus:outline-none focus:ring-2 focus:ring-zinc-900/30 disabled:cursor-not-allowed disabled:opacity-40"
+        className="w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-white transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-zinc-900/30 disabled:cursor-not-allowed disabled:opacity-40"
       >
         {isSubmitting ? "กำลังเปิดใช้งาน…" : "เปิดใช้งานบัญชี"}
       </button>

@@ -4,9 +4,6 @@ import { useAuth } from "@/lib/auth/context";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-const BTN_COLOR = "#4E5BA6";
-const BTN_HOVER = "#3d4a8f";
-
 export default function LoginPage() {
   const { login } = useAuth();
   const router = useRouter();
@@ -15,7 +12,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [hovered, setHovered] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -95,10 +91,7 @@ export default function LoginPage() {
         <button
           type="submit"
           disabled={isSubmitting || !email || !password}
-          onMouseEnter={() => setHovered(true)}
-          onMouseLeave={() => setHovered(false)}
-          style={{ backgroundColor: hovered && !isSubmitting ? BTN_HOVER : BTN_COLOR }}
-          className="w-full rounded-lg px-4 py-2.5 text-sm font-medium text-white transition focus:outline-none focus:ring-2 focus:ring-zinc-900/30 disabled:cursor-not-allowed disabled:opacity-40"
+          className="w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-white transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-zinc-900/30 disabled:cursor-not-allowed disabled:opacity-40"
         >
           {isSubmitting ? "กำลังเข้าสู่ระบบ…" : "เข้าสู่ระบบ"}
         </button>
