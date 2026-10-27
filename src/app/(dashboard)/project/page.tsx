@@ -70,27 +70,19 @@ export default function ProjectPage() {
   const canCreate = user?.role_code === "ADMIN";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold text-text-primary">Project List</h1>
-          <p className="mt-0.5 text-sm text-text-secondary">รายการโครงการทั้งหมดในระบบ</p>
-        </div>
-        {canCreate && (
-          <button className="flex items-center gap-2 rounded-lg bg-bg-button px-4 py-2.5 text-sm font-medium text-white transition hover:bg-accent focus:outline-none focus:ring-2 focus:ring-accent/30">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
-              <path d="M7 1v12M1 7h12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-            สร้างโครงการ
-          </button>
-        )}
+      <div>
+        <h1 className="text-2xl font-semibold text-text-primary">Project List</h1>
+        <p className="mt-0.5 text-sm text-text-secondary">รายการโครงการทั้งหมดในระบบ</p>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-wrap items-center gap-3">
+      {/* Filters row */}
+      <div className="flex flex-wrap items-end gap-3">
+
         {/* Search */}
-        <form onSubmit={handleSearch} className="flex items-center gap-2">
+        <form onSubmit={handleSearch} className="flex flex-col gap-1">
+          <label className="text-xs font-medium text-text-secondary">ค้นหา</label>
           <div className="relative">
             <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-text-secondary">
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
@@ -102,20 +94,20 @@ export default function ProjectPage() {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="ค้นหา Project Code / ชื่อโปรเจก"
+              placeholder="ค้นหา Project Code / ชื่อโปรเจค"
               className="h-9 w-72 rounded-lg border border-border bg-white pl-9 pr-3 text-sm text-text-primary placeholder:text-text-secondary focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
             />
           </div>
         </form>
 
         {/* Status filter */}
-        <div className="flex items-center gap-2">
-          <label className="text-sm text-text-secondary">สถานะ:</label>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-medium text-text-secondary">สถานะ</label>
           <div className="relative">
             <select
               value={statusFilter}
               onChange={(e) => handleStatusChange(e.target.value as ProjectStatus | "")}
-              className="h-9 appearance-none rounded-lg border border-border bg-white pl-3 pr-8 text-sm text-text-primary focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
+              className="h-9 w-36 appearance-none rounded-lg border border-border bg-white pl-3 pr-8 text-sm text-text-primary focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
             >
               {STATUS_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -131,13 +123,13 @@ export default function ProjectPage() {
           </div>
         </div>
 
-        {/* PM filter — placeholder for future */}
-        <div className="flex items-center gap-2">
-          <label className="text-sm text-text-secondary">ผู้จัดการโปรเจค (PM):</label>
+        {/* PM filter */}
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-medium text-text-secondary">ผู้จัดการโปรเจค (PM)</label>
           <div className="relative">
             <select
               disabled
-              className="h-9 appearance-none rounded-lg border border-border bg-white pl-3 pr-8 text-sm text-text-secondary focus:outline-none disabled:cursor-not-allowed disabled:opacity-60"
+              className="h-9 w-44 appearance-none rounded-lg border border-border bg-white pl-3 pr-8 text-sm text-text-primary focus:outline-none disabled:cursor-not-allowed disabled:opacity-70"
             >
               <option>ทั้งหมด</option>
             </select>
@@ -148,6 +140,22 @@ export default function ProjectPage() {
             </span>
           </div>
         </div>
+
+        {/* Spacer */}
+        <div className="flex-1" />
+
+        {/* Create button */}
+        {canCreate && (
+          <button
+            onClick={() => {/* TODO: open create project modal/page */}}
+            className="flex h-9 items-center gap-2 rounded-lg bg-bg-button px-4 text-sm font-medium text-white transition hover:bg-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
+              <path d="M6 1v10M1 6h10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+            สร้างโปรเจค
+          </button>
+        )}
       </div>
 
       {/* Table */}

@@ -1,4 +1,5 @@
 import type { Project } from "@/lib/project/types";
+import { ImEye, ImPencil } from "react-icons/im";
 
 interface Props {
   projects: Project[];
@@ -108,27 +109,16 @@ function ProjectRow({ project, canEdit }: { project: Project; canEdit: boolean }
         <div className="flex items-center gap-2">
           <button
             aria-label={`ดูโครงการ ${project.project_code}`}
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-white text-text-secondary transition hover:border-accent hover:text-accent"
+            className="flex h-[27px] w-[27px] items-center justify-center rounded-lg bg-bg-button text-white transition hover:bg-accent"
           >
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
-              <ellipse cx="7" cy="7" rx="6" ry="4" stroke="currentColor" strokeWidth="1.5" />
-              <circle cx="7" cy="7" r="1.5" fill="currentColor" />
-            </svg>
+            <ImEye size={18} aria-hidden />
           </button>
           {canEdit && (
             <button
               aria-label={`แก้ไขโครงการ ${project.project_code}`}
-              className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-white text-text-secondary transition hover:border-accent hover:text-accent"
+              className="flex h-[27px] w-[27px] items-center justify-center rounded-lg bg-bg-button text-white transition hover:bg-accent"
             >
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
-                <path
-                  d="M9.5 2.5l2 2-7 7H2.5v-2l7-7z"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
+              <ImPencil size={18} aria-hidden />
             </button>
           )}
         </div>
