@@ -16,3 +16,20 @@ export async function GET(req: NextRequest) {
   const json = await res.json();
   return NextResponse.json(json, { status: res.status });
 }
+
+export async function POST(req: NextRequest) {
+  const token = req.headers.get("authorization");
+  const body = await req.json();
+
+  const res = await fetch(`${BACKEND_URL}/api/v1/projects`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(token ? { Authorization: token } : {}),
+    },
+    body: JSON.stringify(body),
+  });
+
+  const json = await res.json();
+  return NextResponse.json(json, { status: res.status });
+}

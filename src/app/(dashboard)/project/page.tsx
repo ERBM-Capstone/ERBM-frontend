@@ -2,6 +2,7 @@
 
 import { useAuth } from "@/lib/auth/context";
 import { useCallback, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import type { Project, ProjectMeta, ProjectListParams, ProjectStatus } from "@/lib/project/types";
 import ProjectTable from "./ProjectTable";
 
@@ -13,11 +14,16 @@ const STATUS_OPTIONS: { label: string; value: ProjectStatus | "" }[] = [
 
 export default function ProjectPage() {
   const { getToken, user } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [projects, setProjects] = useState<Project[]>([]);
   const [meta, setMeta] = useState<ProjectMeta | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(
+    searchParams.get("success") === "created" ? "สร้างโปรเจคสำเร็จ" : null
+  );
 
   const [params, setParams] = useState<ProjectListParams>({
     page: 1,
@@ -51,6 +57,13 @@ export default function ProjectPage() {
       setIsLoading(false);
     }
   }, [getToken]);
+
+  // Auto-dismiss success toast after 4s
+  useEffect(() => {
+    if (!successMsg) return;
+    const t = setTimeout(() => setSuccessMsg(null), 4000);
+    return () => clearTimeout(t);
+  }, [successMsg]);
 
   // Fetch on param change
   useEffect(() => {
@@ -147,7 +160,7 @@ export default function ProjectPage() {
         {/* Create button */}
         {canCreate && (
           <button
-            onClick={() => {/* TODO: open create project modal/page */}}
+            onClick={() => router.push("/project/create")}
             className="flex h-9 items-center gap-2 rounded-lg bg-bg-button px-4 text-sm font-medium text-white transition hover:bg-accent focus:outline-none focus:ring-2 focus:ring-accent/30"
           >
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
@@ -157,6 +170,17 @@ export default function ProjectPage() {
           </button>
         )}
       </div>
+
+      {/* Success toast */}
+      {successMsg && (
+        <div role="status" className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-800">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
+            <circle cx="7" cy="7" r="6.5" stroke="currentColor" strokeWidth="1.5" />
+            <path d="M4 7l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+          {successMsg}
+        </div>
+      )}
 
       {/* Table */}
       <ProjectTable
