@@ -18,6 +18,11 @@ export interface Project {
   status: ProjectStatus;
   start_date: string | null;
   end_date: string | null;
+  created_at?: string | null;
+  active_advance?: {
+    id: number;
+    amount: string;
+  } | null;
 }
 
 export interface ProjectListParams {

@@ -54,8 +54,12 @@ export default function ProjectTable({ projects, isLoading, error, canEdit }: Pr
               <span className="text-xs font-normal">Status</span>
             </th>
             <th className="px-4 py-3 text-left font-medium text-text-secondary">
-              วันเริ่มต้น<br />
-              <span className="text-xs font-normal">Start Date</span>
+              มี Advance ที่ Active<br />
+              <span className="text-xs font-normal">Advance</span>
+            </th>
+            <th className="px-4 py-3 text-left font-medium text-text-secondary">
+              วันที่สร้าง<br />
+              <span className="text-xs font-normal">Created Date</span>
             </th>
             <th className="px-4 py-3" />
           </tr>
@@ -64,7 +68,7 @@ export default function ProjectTable({ projects, isLoading, error, canEdit }: Pr
           {isLoading ? (
             Array.from({ length: 3 }).map((_, i) => (
               <tr key={i} className="border-b border-border last:border-0">
-                {Array.from({ length: 7 }).map((_, j) => (
+                {Array.from({ length: 8 }).map((_, j) => (
                   <td key={j} className="px-4 py-3">
                     <div className="h-4 animate-pulse rounded bg-border" />
                   </td>
@@ -73,7 +77,7 @@ export default function ProjectTable({ projects, isLoading, error, canEdit }: Pr
             ))
           ) : projects.length === 0 ? (
             <tr>
-              <td colSpan={7} className="px-4 py-10 text-center text-text-secondary">
+              <td colSpan={8} className="px-4 py-10 text-center text-text-secondary">
                 ไม่พบโครงการ
               </td>
             </tr>
@@ -104,7 +108,25 @@ function ProjectRow({ project, canEdit }: { project: Project; canEdit: boolean }
       <td className="px-4 py-3">
         <StatusBadge status={project.status} />
       </td>
-      <td className="px-4 py-3 text-text-secondary">{formatThaiDate(project.start_date)}</td>
+      <td className="px-4 py-3">
+        {project.active_advance ? (
+          <div className="flex items-center gap-1.5">
+            <span className="text-success text-base leading-none">●</span>
+            <div className="leading-tight">
+              <p className="text-xs text-text-secondary">มี</p>
+              <p className="text-sm font-medium text-text-primary">
+                ฿{Number(project.active_advance.amount).toLocaleString("th-TH")}
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-1.5">
+            <span className="text-danger text-base leading-none">●</span>
+            <span className="text-xs text-text-secondary">ไม่มี</span>
+          </div>
+        )}
+      </td>
+      <td className="px-4 py-3 text-text-secondary">{formatThaiDate(project.created_at ?? project.start_date)}</td>
       <td className="px-4 py-3">
         <div className="flex items-center gap-2">
           <button
