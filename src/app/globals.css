@@ -1,6 +1,31 @@
 @import "tailwindcss";
 
 @theme {
+  /* --- Font --- */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  /* --- Type scale (from Figma) ---
+     h1:      24px / 32px / Bold
+     h2:      20px / 32px / SemiBold
+     body:    12px / 18px / SemiBold
+     numeric: 12px / 18px / SemiBold
+     Label:   13px / 19.5px / Medium
+  --- */
+  --font-size-h1: 1.5rem;
+  --line-height-h1: 2rem;
+  --font-weight-h1: 700;
+
+  --font-size-h2: 1.25rem;
+  --line-height-h2: 2rem;
+  --font-weight-h2: 600;
+
+  --font-size-body: 0.75rem;
+  --line-height-body: 1.125rem;
+  --font-weight-body: 600;
+
+  --font-size-label: 0.8125rem;
+  --line-height-label: 1.21875rem;
+  --font-weight-label: 500;
   /* --- Base --- */
   --color-surface: #FFFFFF;
   --color-accent: #3E4784;

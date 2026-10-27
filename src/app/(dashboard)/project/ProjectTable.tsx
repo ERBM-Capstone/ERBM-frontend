@@ -1,0 +1,153 @@
+import type { Project } from "@/lib/project/types";
+
+interface Props {
+  projects: Project[];
+  isLoading: boolean;
+  error: string | null;
+  canEdit: boolean;
+}
+
+function formatThaiDate(dateStr: string | null | undefined): string {
+  if (!dateStr) return "—";
+  const date = new Date(dateStr);
+  if (isNaN(date.getTime())) return "—";
+  return date.toLocaleDateString("th-TH", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+export default function ProjectTable({ projects, isLoading, error, canEdit }: Props) {
+  if (error) {
+    return (
+      <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-danger">
+        {error}
+      </div>
+    );
+  }
+
+  return (
+    <div className="overflow-hidden rounded-xl border border-border">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-border bg-bg-page">
+            <th className="px-4 py-3 text-left font-medium text-text-secondary">
+              รหัสโปรเจค<br />
+              <span className="text-xs font-normal">Project Code</span>
+            </th>
+            <th className="px-4 py-3 text-left font-medium text-text-secondary">
+              ชื่อโปรเจค<br />
+              <span className="text-xs font-normal">Project Name</span>
+            </th>
+            <th className="px-4 py-3 text-left font-medium text-text-secondary">
+              ผู้จัดการโปรเจค<br />
+              <span className="text-xs font-normal">Project Manager</span>
+            </th>
+            <th className="px-4 py-3 text-left font-medium text-text-secondary">
+              ผู้ประสานงาน<br />
+              <span className="text-xs font-normal">Project Coordinator</span>
+            </th>
+            <th className="px-4 py-3 text-left font-medium text-text-secondary">
+              สถานะ<br />
+              <span className="text-xs font-normal">Status</span>
+            </th>
+            <th className="px-4 py-3 text-left font-medium text-text-secondary">
+              วันเริ่มต้น<br />
+              <span className="text-xs font-normal">Start Date</span>
+            </th>
+            <th className="px-4 py-3" />
+          </tr>
+        </thead>
+        <tbody>
+          {isLoading ? (
+            Array.from({ length: 3 }).map((_, i) => (
+              <tr key={i} className="border-b border-border last:border-0">
+                {Array.from({ length: 7 }).map((_, j) => (
+                  <td key={j} className="px-4 py-3">
+                    <div className="h-4 animate-pulse rounded bg-border" />
+                  </td>
+                ))}
+              </tr>
+            ))
+          ) : projects.length === 0 ? (
+            <tr>
+              <td colSpan={7} className="px-4 py-10 text-center text-text-secondary">
+                ไม่พบโครงการ
+              </td>
+            </tr>
+          ) : (
+            projects.map((project) => (
+              <ProjectRow key={project.id} project={project} canEdit={canEdit} />
+            ))
+          )}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function ProjectRow({ project, canEdit }: { project: Project; canEdit: boolean }) {
+  return (
+    <tr className="border-b border-border last:border-0 hover:bg-bg-page/60 transition-colors">
+      <td className="px-4 py-3 font-medium text-text-primary">{project.project_code}</td>
+      <td className="px-4 py-3 text-text-primary">{project.name}</td>
+      <td className="px-4 py-3 text-text-primary">
+        {project.pm.first_name} {project.pm.last_name.charAt(0)}.
+      </td>
+      <td className="px-4 py-3 text-text-primary">
+        {project.pc
+          ? `${project.pc.first_name} ${project.pc.last_name.charAt(0)}.`
+          : <span className="text-text-secondary">—</span>}
+      </td>
+      <td className="px-4 py-3">
+        <StatusBadge status={project.status} />
+      </td>
+      <td className="px-4 py-3 text-text-secondary">{formatThaiDate(project.start_date)}</td>
+      <td className="px-4 py-3">
+        <div className="flex items-center gap-2">
+          <button
+            aria-label={`ดูโครงการ ${project.project_code}`}
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-white text-text-secondary transition hover:border-accent hover:text-accent"
+          >
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
+              <ellipse cx="7" cy="7" rx="6" ry="4" stroke="currentColor" strokeWidth="1.5" />
+              <circle cx="7" cy="7" r="1.5" fill="currentColor" />
+            </svg>
+          </button>
+          {canEdit && (
+            <button
+              aria-label={`แก้ไขโครงการ ${project.project_code}`}
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-border bg-white text-text-secondary transition hover:border-accent hover:text-accent"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
+                <path
+                  d="M9.5 2.5l2 2-7 7H2.5v-2l7-7z"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </button>
+          )}
+        </div>
+      </td>
+    </tr>
+  );
+}
+
+function StatusBadge({ status }: { status: "ACTIVE" | "CLOSED" }) {
+  if (status === "ACTIVE") {
+    return (
+      <span className="inline-flex items-center rounded-full bg-status-active-bg px-2.5 py-0.5 text-xs font-medium text-status-active-text">
+        ใช้งาน
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center rounded-full bg-status-closed-bg px-2.5 py-0.5 text-xs font-medium text-status-closed-text">
+      ปิด
+    </span>
+  );
+}
