@@ -1,9 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { ImCheckmark } from "react-icons/im";
-import { IoArrowBack } from "react-icons/io5";
+import { useRef, useState } from "react";
+import Link from "next/link";
+import { LuArrowLeft, LuCheck, LuChevronRight } from "react-icons/lu";
 import { useAuth } from "@/lib/auth/context";
 
 /* ─── Mock data (replace with API when available) ─── */
@@ -26,46 +26,35 @@ const MOCK_DEPT = [
 
 /* ─── Field component ─── */
 interface FieldProps {
+  id: string;
   label: string;
   subLabel: string;
   required?: boolean;
   error?: string;
   children: React.ReactNode;
 }
-function Field({ label, subLabel, required, error, children }: FieldProps) {
+function Field({ id, label, subLabel, required, error, children }: FieldProps) {
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex min-w-0 flex-col gap-2">
       <div className="flex items-baseline gap-1.5">
-        <span className="text-sm font-medium text-text-primary">{label}</span>
-        {required && <span className="text-danger text-sm font-medium">*</span>}
+        <label htmlFor={id} className="text-sm font-medium text-text-primary">{label}</label>
+        {required && <span className="text-danger-text text-sm font-medium" aria-hidden>*</span>}
       </div>
-      <span className="text-xs text-text-secondary -mt-0.5">{subLabel}</span>
+      <span id={`${id}-hint`} className="text-xs text-text-secondary -mt-1">{subLabel}</span>
       {children}
       {error && (
-        <p role="alert" className="text-xs text-danger mt-0.5">{error}</p>
+        <p id={`${id}-error`} role="alert" className="text-xs text-danger-text">{error}</p>
       )}
     </div>
   );
 }
 
-/* ─── Shared input/select styles ─── */
+/* Shared fields follow the Red Broadcast surface and focus treatment. */
 const inputCls = (hasError: boolean) =>
-  [
-    "h-10 w-full rounded-lg border bg-white px-3.5 text-sm text-text-primary placeholder:text-text-secondary",
-    "transition focus:outline-none focus:ring-2",
-    hasError
-      ? "border-danger focus:border-danger focus:ring-danger/20"
-      : "border-border focus:border-accent focus:ring-accent/20",
-  ].join(" ");
+  `form-input ${hasError ? "border-danger" : ""}`;
 
 const selectCls = (hasError: boolean) =>
-  [
-    "h-10 w-full appearance-none rounded-lg border bg-white pl-3.5 pr-9 text-sm",
-    "transition focus:outline-none focus:ring-2",
-    hasError
-      ? "border-danger focus:border-danger focus:ring-danger/20 text-text-primary"
-      : "border-border focus:border-accent focus:ring-accent/20 text-text-primary",
-  ].join(" ");
+  `${inputCls(hasError)} appearance-none pr-10`;
 
 const ChevronDown = () => (
   <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-text-secondary">
@@ -94,9 +83,17 @@ interface FormErrors {
   pc_user_id?: string;
 }
 
+const FIELD_IDS: Record<keyof FormErrors, string> = {
+  name: "project-name",
+  budget: "project-budget",
+  pm_user_id: "project-pm",
+  pc_user_id: "project-pc",
+};
+
 export default function CreateProjectPage() {
   const router = useRouter();
   const { getToken } = useAuth();
+  const formRef = useRef<HTMLFormElement>(null);
 
   const [values, setValues] = useState<FormValues>({
     name: "",
@@ -137,6 +134,8 @@ export default function CreateProjectPage() {
     const errs = validate();
     if (Object.keys(errs).length > 0) {
       setErrors(errs);
+      const firstError = Object.keys(errs)[0] as keyof FormErrors;
+      formRef.current?.querySelector<HTMLInputElement | HTMLSelectElement>(`#${FIELD_IDS[firstError]}`)?.focus();
       return;
     }
 
@@ -183,23 +182,29 @@ export default function CreateProjectPage() {
   }
 
   return (
-    <div className="space-y-0">
-      {/* Header */}
-      <div className="pb-4 border-b border-border">
-        <h1 className="text-2xl font-semibold text-text-primary">สร้างโปรเจค</h1>
-        <p className="mt-0.5 text-sm text-text-secondary">กรอกข้อมูลเพื่อสร้างโปรเจคใหม่ในระบบ</p>
-        <p className="mt-2 text-xs text-text-secondary">
-          <span className="text-danger font-medium">*</span> จำเป็นต้องกรอกข้อมูล
+    <div className="mx-auto max-w-5xl">
+      <nav aria-label="เส้นทางหน้า" className="mb-6 flex items-center gap-2 text-xs text-text-secondary">
+        <Link href="/project" className="inline-flex min-h-8 items-center hover:text-secondary">Project</Link>
+        <LuChevronRight size={14} aria-hidden />
+        <span aria-current="page">สร้างโปรเจค</span>
+      </nav>
+      <div className="pb-6 border-b border-border">
+        <h1 className="text-2xl font-bold leading-8 text-text-primary">สร้างโปรเจค</h1>
+        <p className="mt-1 text-sm text-text-secondary">กรอกข้อมูลเพื่อสร้างโปรเจคใหม่ในระบบ</p>
+        <p className="mt-3 text-xs text-text-secondary">
+          <span className="text-danger-text font-medium">*</span> จำเป็นต้องกรอกข้อมูล
         </p>
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSubmit} noValidate>
-        <div className="py-6 space-y-6">
+      <form ref={formRef} onSubmit={handleSubmit} noValidate>
+        <div className="py-8 space-y-8">
+          <h2 className="text-xl font-medium leading-7">ข้อมูลโครงการ</h2>
 
           {/* Row 1: Project Name + Budget */}
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <Field
+              id="project-name"
               label="ชื่อโปรเจค"
               subLabel="Project Name"
               required
@@ -207,6 +212,10 @@ export default function CreateProjectPage() {
             >
               <input
                 type="text"
+                id="project-name"
+                required
+                aria-invalid={!!errors.name}
+                aria-describedby={`project-name-hint${errors.name ? " project-name-error" : ""}`}
                 value={values.name}
                 onChange={(e) => set("name", e.target.value)}
                 placeholder="ระบุ ชื่อโปรเจค"
@@ -217,6 +226,7 @@ export default function CreateProjectPage() {
             </Field>
 
             <Field
+              id="project-budget"
               label="งบประมาณ"
               subLabel="Budget (THB)"
               required
@@ -225,6 +235,10 @@ export default function CreateProjectPage() {
               <input
                 type="text"
                 inputMode="decimal"
+                id="project-budget"
+                required
+                aria-invalid={!!errors.budget}
+                aria-describedby={`project-budget-hint${errors.budget ? " project-budget-error" : ""}`}
                 value={values.budget}
                 onChange={(e) => set("budget", e.target.value)}
                 placeholder="เช่น 150000.00"
@@ -234,9 +248,11 @@ export default function CreateProjectPage() {
             </Field>
           </div>
 
+          <h2 className="border-t border-border pt-8 text-xl font-medium leading-7">ผู้รับผิดชอบ</h2>
           {/* Row 2: PM + PC */}
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <Field
+              id="project-pm"
               label="ผู้จัดการโปรเจค (PM)"
               subLabel="Responsible PM"
               required
@@ -244,6 +260,10 @@ export default function CreateProjectPage() {
             >
               <div className="relative">
                 <select
+                  id="project-pm"
+                  required
+                  aria-invalid={!!errors.pm_user_id}
+                  aria-describedby={`project-pm-hint${errors.pm_user_id ? " project-pm-error" : ""}`}
                   value={values.pm_user_id}
                   onChange={(e) => set("pm_user_id", e.target.value)}
                   className={selectCls(!!errors.pm_user_id)}
@@ -259,6 +279,7 @@ export default function CreateProjectPage() {
             </Field>
 
             <Field
+              id="project-pc"
               label="ผู้ประสานงานโปรเจค (PC)"
               subLabel="Responsible PC"
               required
@@ -266,6 +287,10 @@ export default function CreateProjectPage() {
             >
               <div className="relative">
                 <select
+                  id="project-pc"
+                  required
+                  aria-invalid={!!errors.pc_user_id}
+                  aria-describedby={`project-pc-hint${errors.pc_user_id ? " project-pc-error" : ""}`}
                   value={values.pc_user_id}
                   onChange={(e) => set("pc_user_id", e.target.value)}
                   className={selectCls(!!errors.pc_user_id)}
@@ -281,11 +306,13 @@ export default function CreateProjectPage() {
             </Field>
           </div>
 
-          {/* Row 3: Department + empty */}
+          {/* Department */}
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-            <Field label="หน่วยงาน / แผนก" subLabel="Department">
+            <Field id="project-department" label="หน่วยงาน / แผนก" subLabel="Department">
               <div className="relative">
                 <select
+                  id="project-department"
+                  aria-describedby="project-department-hint"
                   value={values.department}
                   onChange={(e) => set("department", e.target.value)}
                   className={selectCls(false)}
@@ -299,48 +326,49 @@ export default function CreateProjectPage() {
                 <ChevronDown />
               </div>
             </Field>
-            {/* Right column intentionally empty per Figma */}
-            <div />
           </div>
 
+          <h2 className="border-t border-border pt-8 text-xl font-medium leading-7">รายละเอียดเพิ่มเติม</h2>
           {/* Row 4: Description — full width */}
-          <Field label="หมายเหตุ" subLabel="Description">
+          <Field id="project-description" label="หมายเหตุ" subLabel="Description">
             <textarea
+              id="project-description"
+              aria-describedby="project-description-hint"
               value={values.description}
               onChange={(e) => set("description", e.target.value)}
               placeholder="ระบุ รายละเอียดเพิ่มเติมของโปรเจค (ถ้ามี)"
               rows={4}
-              className="w-full rounded-lg border border-border bg-white px-3.5 py-2.5 text-sm text-text-primary placeholder:text-text-secondary transition focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 resize-none disabled:opacity-50"
+              className="form-input min-h-28 resize-y"
               disabled={isSubmitting}
             />
           </Field>
 
           {/* Submit error */}
           {submitError && (
-            <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-danger">
+            <div role="alert" className="notice-error">
               {submitError}
             </div>
           )}
         </div>
 
         {/* Footer buttons */}
-        <div className="flex items-center justify-between border-t border-border pt-4">
+        <div className="flex items-center justify-between gap-4 border-t border-border pt-6">
           <button
             type="button"
             onClick={() => router.push("/project")}
             disabled={isSubmitting}
-            className="flex items-center gap-2 rounded-lg border border-border bg-white px-5 py-2.5 text-sm font-medium text-text-primary transition hover:bg-bg-page focus:outline-none focus:ring-2 focus:ring-border disabled:opacity-50"
+            className="btn-secondary"
           >
-            <IoArrowBack size={15} aria-hidden />
+            <LuArrowLeft size={16} aria-hidden />
             ย้อนกลับ
           </button>
 
           <button
             type="submit"
             disabled={isSubmitting}
-            className="flex items-center gap-2 rounded-lg bg-bg-button px-5 py-2.5 text-sm font-medium text-white transition hover:bg-accent focus:outline-none focus:ring-2 focus:ring-accent/30 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="btn-primary"
           >
-            <ImCheckmark size={13} aria-hidden />
+            <LuCheck size={16} aria-hidden />
             {isSubmitting ? "กำลังบันทึก…" : "บันทึก"}
           </button>
         </div>

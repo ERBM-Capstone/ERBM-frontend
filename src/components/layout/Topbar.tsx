@@ -1,34 +1,53 @@
 "use client";
 
+import Link from "next/link";
 import { useAuth } from "@/lib/auth/context";
+import { roleLabel } from "@/lib/auth/role-label";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { LuBell, LuChevronDown, LuLogOut, LuMenu, LuX } from "react-icons/lu";
+import Brand from "./Brand";
 
 interface TopbarProps {
-  onMenuClick: () => void;
+  collapsed: boolean;
+  mobileOpen: boolean;
+  onDesktopMenuClick: () => void;
+  onMobileMenuClick: () => void;
 }
 
-export default function Topbar({ onMenuClick }: TopbarProps) {
+export default function Topbar({ collapsed, mobileOpen, onDesktopMenuClick, onMobileMenuClick }: TopbarProps) {
   const { user, logout } = useAuth();
   const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
+  const notificationsRef = useRef<HTMLDivElement>(null);
+  const accountButtonRef = useRef<HTMLButtonElement>(null);
+  const notificationButtonRef = useRef<HTMLButtonElement>(null);
+  const logoutButtonRef = useRef<HTMLButtonElement>(null);
+  const notificationCloseRef = useRef<HTMLButtonElement>(null);
 
   const initials = user
     ? `${user.first_name?.[0] ?? ""}${user.last_name?.[0] ?? ""}`.toUpperCase()
     : "?";
 
-  // Close dropdown when clicking outside
   useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false);
-      }
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) setMenuOpen(false);
+      if (notificationsRef.current && !notificationsRef.current.contains(event.target as Node)) setNotificationsOpen(false);
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (menuOpen) logoutButtonRef.current?.focus();
+  }, [menuOpen]);
+
+  useEffect(() => {
+    if (notificationsOpen) notificationCloseRef.current?.focus();
+  }, [notificationsOpen]);
 
   async function handleLogout() {
     setIsLoggingOut(true);
@@ -42,96 +61,73 @@ export default function Topbar({ onMenuClick }: TopbarProps) {
   }
 
   return (
-    <header className="flex h-14 items-center justify-between border-b border-border bg-white px-4">
-      {/* Left — hamburger */}
-      <button
-        onClick={onMenuClick}
-        className="rounded p-1.5 text-text-secondary transition hover:bg-bg-page hover:text-text-primary"
-        aria-label="Toggle sidebar"
-      >
-        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
-          <path
-            d="M2 4h14M2 9h14M2 14h14"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-          />
-        </svg>
-      </button>
-
-      {/* Right — actions */}
-      <div className="flex items-center gap-1">
-        {/* Notification bell */}
-        <button
-          className="rounded p-1.5 text-text-secondary transition hover:bg-bg-page hover:text-text-primary"
-          aria-label="Notifications"
-        >
-          <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
-            <path
-              d="M9 2a5.5 5.5 0 0 0-5.5 5.5v2.25L2 12h14l-1.5-2.25V7.5A5.5 5.5 0 0 0 9 2zM7 14a2 2 0 0 0 4 0"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+    <header className="sticky top-0 z-30 flex h-[72px] items-center justify-between gap-3 border-b border-border bg-white px-3 sm:px-6">
+      <div className="flex shrink-0 items-center gap-3 sm:gap-8">
+        <button type="button" onClick={onDesktopMenuClick} className="icon-button hidden! lg:inline-flex!" aria-label={collapsed ? "ขยายเมนู" : "ย่อเมนู"} aria-expanded={!collapsed} aria-controls="desktop-navigation">
+          <LuMenu size={18} aria-hidden />
         </button>
+        <button type="button" onClick={onMobileMenuClick} className="icon-button lg:hidden!" aria-label="เปิดเมนู" aria-expanded={mobileOpen} aria-controls="mobile-navigation">
+          <LuMenu size={18} aria-hidden />
+        </button>
+        <Link href="/worklist" aria-label="ERBM หน้าหลัก"><Brand /></Link>
+      </div>
 
-        {/* Avatar + dropdown */}
-        <div className="relative ml-1" ref={menuRef}>
+      <div className="flex min-w-0 items-center gap-1 sm:gap-5">
+        <div
+          ref={notificationsRef} className="relative"
+          onKeyDown={(event) => {
+            if (event.key === "Escape") { setNotificationsOpen(false); notificationButtonRef.current?.focus(); }
+          }}
+          onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setNotificationsOpen(false); }}
+        >
           <button
-            onClick={() => setMenuOpen((prev) => !prev)}
-            className="flex items-center gap-2 rounded-md px-2 py-1 transition hover:bg-bg-page"
-            aria-expanded={menuOpen}
-            aria-haspopup="menu"
-            aria-label="User menu"
-            disabled={isLoggingOut}
+            ref={notificationButtonRef} type="button" className="icon-button"
+            aria-label="การแจ้งเตือน" aria-expanded={notificationsOpen} aria-controls="notification-panel"
+            onClick={() => { setNotificationsOpen((previous) => !previous); setMenuOpen(false); }}
           >
-            <div
-              className="flex h-8 w-8 items-center justify-center rounded-full bg-accent text-xs font-semibold text-white select-none"
-              aria-hidden
-            >
-              {initials}
-            </div>
-            {user && (
-              <div className="hidden flex-col leading-none text-left sm:flex">
-                <span className="text-sm font-medium text-text-primary">
-                  {user.first_name} {user.last_name}
-                </span>
-                <span className="text-xs text-text-secondary">{user.role_code}</span>
-              </div>
-            )}
+            <LuBell size={20} strokeWidth={1.7} aria-hidden />
           </button>
-
-          {/* Dropdown menu */}
+          {notificationsOpen && (
+            <div id="notification-panel" className="absolute right-0 top-full mt-3 w-64 rounded-lg border border-border bg-white p-4 shadow-menu sm:w-72">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="text-sm font-medium">การแจ้งเตือน</h2>
+                <button ref={notificationCloseRef} type="button" className="icon-button" aria-label="ปิดการแจ้งเตือน" onClick={() => { setNotificationsOpen(false); notificationButtonRef.current?.focus(); }}><LuX size={16} aria-hidden /></button>
+              </div>
+              <p className="py-4 text-sm leading-6 text-text-secondary">การแจ้งเตือนยังไม่พร้อมใช้งาน</p>
+            </div>
+          )}
+        </div>
+        <div
+          className="relative min-w-0" ref={menuRef}
+          onKeyDown={(event) => { if (event.key === "Escape") { setMenuOpen(false); accountButtonRef.current?.focus(); } }}
+          onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) setMenuOpen(false); }}
+        >
+          <button
+            ref={accountButtonRef} type="button"
+            onClick={() => { setMenuOpen((previous) => !previous); setNotificationsOpen(false); }}
+            className="flex min-h-11 items-center gap-3 rounded-lg px-1 py-1 text-left transition-colors hover:bg-surface sm:w-64 sm:px-2"
+            aria-expanded={menuOpen} aria-controls="account-panel" aria-label="บัญชีผู้ใช้" disabled={isLoggingOut}
+          >
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-surface text-xs font-medium text-text-primary" aria-hidden>{initials}</span>
+            {user && (
+              <span className="hidden min-w-0 flex-1 sm:block">
+                <span className="block truncate text-sm font-medium leading-5">{user.first_name} {user.last_name}</span>
+                <span className="mt-0.5 block text-xs leading-4 text-text-secondary">{roleLabel(user.role_code)}</span>
+              </span>
+            )}
+            <LuChevronDown size={14} className="hidden shrink-0 text-neutral sm:block" aria-hidden />
+          </button>
           {menuOpen && (
-            <div
-              role="menu"
-              className="absolute right-0 top-full mt-1 w-44 rounded-lg border border-border bg-white py-1 shadow-lg"
-            >
+            <div id="account-panel" className="absolute right-0 top-full mt-3 w-64 rounded-lg border border-border bg-white py-2 shadow-menu">
               {user && (
-                <div className="border-b border-border px-3 py-2 sm:hidden">
-                  <p className="text-sm font-medium text-text-primary">
-                    {user.first_name} {user.last_name}
-                  </p>
-                  <p className="text-xs text-text-secondary">{user.role_code}</p>
+                <div className="border-b border-border px-4 py-3">
+                  <p className="break-words text-sm font-medium">{user.first_name} {user.last_name}</p>
+                  <p className="mt-1 break-all text-xs text-text-secondary">{user.email}</p>
+                  <p className="mt-2 text-xs text-text-secondary">{roleLabel(user.role_code)}</p>
                 </div>
               )}
-              <button
-                role="menuitem"
-                onClick={handleLogout}
-                disabled={isLoggingOut}
-                className="flex w-full items-center gap-2 px-3 py-2 text-sm text-danger transition hover:bg-red-50 disabled:opacity-50"
-              >
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden>
-                  <path
-                    d="M5 2H2.5A1.5 1.5 0 0 0 1 3.5v7A1.5 1.5 0 0 0 2.5 12H5M9 10l3-3-3-3M12 7H5"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
+              <button ref={logoutButtonRef} type="button" onClick={handleLogout} disabled={isLoggingOut} className="flex min-h-11 w-full items-center gap-3 px-4 py-3 text-sm transition-colors hover:bg-surface disabled:opacity-50">
+                <LuLogOut size={18} aria-hidden />
                 {isLoggingOut ? "กำลังออกจากระบบ…" : "ออกจากระบบ"}
               </button>
             </div>

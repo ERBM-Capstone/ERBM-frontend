@@ -70,15 +70,15 @@ function ActivateAccountForm() {
   if (pageState.kind === "success") {
     return (
       <div aria-live="polite" className="space-y-6">
-        <div className="rounded-xl border border-green-200 bg-green-50 px-5 py-4">
-          <p className="text-sm font-medium text-green-800">เปิดใช้งานบัญชีสำเร็จ!</p>
-          <p className="mt-1 text-sm text-green-700">
+        <div className="notice-success">
+          <p className="text-sm font-medium text-status-active-text">เปิดใช้งานบัญชีสำเร็จ!</p>
+          <p className="mt-1 text-sm text-status-active-text">
             ตั้งรหัสผ่านเรียบร้อยแล้ว คุณสามารถเข้าสู่ระบบได้แล้ว
           </p>
         </div>
         <button
           onClick={() => router.replace("/login")}
-          className="w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-white transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-zinc-900/30"
+          className="btn-primary w-full"
         >
           ไปยังหน้าเข้าสู่ระบบ
         </button>
@@ -88,9 +88,9 @@ function ActivateAccountForm() {
 
   if (pageState.kind === "invalid") {
     return (
-      <div aria-live="polite" className="rounded-xl border border-red-200 bg-red-50 px-5 py-4">
-        <p className="text-sm font-medium text-red-800">ไม่พบโทเค็นเปิดใช้งาน</p>
-        <p className="mt-1 text-sm text-red-700">
+      <div aria-live="polite" className="notice-error">
+        <p className="text-sm font-medium text-danger-text">ไม่พบโทเค็นเปิดใช้งาน</p>
+        <p className="mt-1 text-sm text-danger-text">
           กรุณาตรวจสอบลิงก์จากอีเมลหรือติดต่อผู้ดูแลระบบ
         </p>
       </div>
@@ -102,7 +102,7 @@ function ActivateAccountForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-5" noValidate>
       <div className="space-y-1.5">
-        <label htmlFor="password" className="block text-sm font-medium text-zinc-700">
+        <label htmlFor="password" className="block text-sm font-medium text-text-primary">
           รหัสผ่านใหม่
         </label>
         <input
@@ -114,14 +114,14 @@ function ActivateAccountForm() {
           maxLength={72}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="block w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 transition focus:border-zinc-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-zinc-900/10 disabled:opacity-50"
+          className="form-input"
           placeholder="อย่างน้อย 8 ตัวอักษร"
           disabled={isSubmitting}
         />
       </div>
 
       <div className="space-y-1.5">
-        <label htmlFor="confirm" className="block text-sm font-medium text-zinc-700">
+        <label htmlFor="confirm" className="block text-sm font-medium text-text-primary">
           ยืนยันรหัสผ่าน
         </label>
         <input
@@ -131,14 +131,14 @@ function ActivateAccountForm() {
           required
           value={confirm}
           onChange={(e) => setConfirm(e.target.value)}
-          className="block w-full rounded-lg border border-zinc-200 bg-zinc-50 px-3.5 py-2.5 text-sm text-zinc-900 placeholder:text-zinc-400 transition focus:border-zinc-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-zinc-900/10 disabled:opacity-50"
+          className="form-input"
           placeholder="กรอกรหัสผ่านอีกครั้ง"
           disabled={isSubmitting}
         />
       </div>
 
       {formError && (
-        <div role="alert" className="rounded-lg border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-700">
+        <div role="alert" className="notice-error">
           {formError}
         </div>
       )}
@@ -146,7 +146,7 @@ function ActivateAccountForm() {
       <button
         type="submit"
         disabled={isSubmitting || !password || !confirm}
-        className="w-full rounded-lg bg-brand px-4 py-2.5 text-sm font-medium text-white transition hover:bg-brand-hover focus:outline-none focus:ring-2 focus:ring-zinc-900/30 disabled:cursor-not-allowed disabled:opacity-40"
+        className="btn-primary w-full"
       >
         {isSubmitting ? "กำลังเปิดใช้งาน…" : "เปิดใช้งานบัญชี"}
       </button>
@@ -157,16 +157,16 @@ function ActivateAccountForm() {
 export default function ActivateAccountPage() {
   return (
     <div className="space-y-8">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900">
+      <div className="space-y-2">
+        <h1 className="text-2xl font-bold leading-8 text-text-primary">
           ตั้งรหัสผ่าน
         </h1>
-        <p className="text-sm text-zinc-500">
+        <p className="text-sm text-text-secondary">
           ตั้งรหัสผ่านเพื่อเปิดใช้งานบัญชี ERBM ของคุณ
         </p>
       </div>
 
-      <Suspense fallback={<p className="text-sm text-zinc-400" aria-live="polite">กำลังโหลด…</p>}>
+      <Suspense fallback={<p className="text-sm text-text-secondary" aria-live="polite">กำลังโหลด…</p>}>
         <ActivateAccountForm />
       </Suspense>
     </div>

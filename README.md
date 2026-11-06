@@ -76,7 +76,7 @@ CLAUDE.md             Claude Code entry point for shared instructions
 
 The `@/*` import alias resolves to `src/*`. Add static assets under `public/` when needed; Next.js serves them from the site root. App Router components run on the server by default. Add `"use client"` only when a component needs state, effects, event handlers, or browser APIs.
 
-Tailwind CSS is compiled by `@tailwindcss/postcss`, configured in `postcss.config.mjs`. This starter uses system fonts and does not download fonts during a build.
+Tailwind CSS is compiled by `@tailwindcss/postcss`, configured in `postcss.config.mjs`. The UI follows the [Red Broadcast design system](docs/design/red-broadcast.md). Roboto, Noto Sans Thai, and Roboto Mono use `next/font/google`; a fresh build needs access to Google Fonts, and Next.js serves the downloaded fonts locally.
 
 Turbopack is the default bundler. If your environment restricts the local worker ports used by Turbopack, use the supported Webpack commands: `npm run dev -- --webpack` and `npm run build -- --webpack`.
 

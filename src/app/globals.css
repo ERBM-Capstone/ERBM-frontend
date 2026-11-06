@@ -1,79 +1,210 @@
 @import "tailwindcss";
 
+@theme inline {
+  --font-sans: var(--font-roboto), var(--font-thai), sans-serif;
+  --font-mono: var(--font-roboto-mono), monospace;
+}
+
 @theme {
-  /* --- Font --- */
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  /* Red Broadcast: quiet surfaces, compact type, a restrained red accent. */
+  --color-primary: #ff0000;
+  --color-primary-hover: #cc0000;
+  --color-secondary: #065fd4;
+  --color-neutral: #606060;
+  --color-background: #ffffff;
+  --color-surface: #f2f2f2;
+  --color-border: #e5e5e5;
+  --color-text-primary: #0f0f0f;
+  --color-text-secondary: #606060;
+  --color-success: #2ba640;
+  --color-warning: #fb8c00;
+  --color-danger: #ff0000;
+  --color-danger-text: #b91c1c;
 
-  /* --- Type scale (from Figma) ---
-     h1:      24px / 32px / Bold
-     h2:      20px / 32px / SemiBold
-     body:    12px / 18px / SemiBold
-     numeric: 12px / 18px / SemiBold
-     Label:   13px / 19.5px / Medium
-  --- */
-  --font-size-h1: 1.5rem;
-  --line-height-h1: 2rem;
-  --font-weight-h1: 700;
+  --color-accent: #0f0f0f;
+  --color-accent-hover: #272727;
+  --color-accent-soft: #f2f2f2;
+  --color-bg-page: #ffffff;
+  --color-bg-button: #0f0f0f;
+  --color-brand: #0f0f0f;
+  --color-brand-hover: #272727;
+  --color-processing: #065fd4;
 
-  --font-size-h2: 1.25rem;
-  --line-height-h2: 2rem;
-  --font-weight-h2: 600;
+  --color-status-draft-bg: #f2f2f2;
+  --color-status-draft-text: #606060;
+  --color-status-pending-bg: #fff4e5;
+  --color-status-pending-text: #965000;
+  --color-status-return-bg: #fff0f0;
+  --color-status-return-text: #b91c1c;
+  --color-status-approve-bg: #edf4ff;
+  --color-status-approve-text: #065fd4;
+  --color-status-active-bg: #ecf7ee;
+  --color-status-active-text: #217a31;
+  --color-status-closing-bg: #f1ecfd;
+  --color-status-closing-text: #6d3fc4;
+  --color-status-closed-bg: #f2f2f2;
+  --color-status-closed-text: #606060;
 
-  --font-size-body: 0.75rem;
-  --line-height-body: 1.125rem;
-  --font-weight-body: 600;
+  --shadow-menu: 0 4px 32px rgb(0 0 0 / 10%);
+}
 
-  --font-size-label: 0.8125rem;
-  --line-height-label: 1.21875rem;
-  --font-weight-label: 500;
-  /* --- Base --- */
-  --color-surface: #FFFFFF;
-  --color-accent: #3E4784;
-  --color-accent-hover: #3E4784;
-  --color-accent-soft: #EEF3FF;
-  --color-danger: #D92D20;
-  --color-warning: #DC6803;
-  --color-border: #E4E7EC;
-  --color-processing: #7F56D9;
-  --color-success: #079455;
+@layer base {
+  html {
+    color-scheme: light;
+    scroll-padding-top: 96px;
+  }
 
-  /* --- Background --- */
-  --color-bg-page: #F8F9FA;
-  --color-bg-button: #4E5BA6;
+  body {
+    background: var(--color-background);
+    color: var(--color-text-primary);
+    font-size: 14px;
+    line-height: 1.5;
+  }
 
-  /* --- Text --- */
-  --color-text-primary: #1D2939;
-  --color-text-secondary: #667085;
+  button, a, input, select, textarea {
+    -webkit-tap-highlight-color: transparent;
+  }
 
-  /* --- Status: Draft --- */
-  --color-status-draft-bg: #F1F2F5;
-  --color-status-draft-text: #5B6270;
+  button:not(:disabled), select:not(:disabled) {
+    cursor: pointer;
+  }
 
-  /* --- Status: Pending PM Approval --- */
-  --color-status-pending-bg: #FDF3E2;
-  --color-status-pending-text: #A86A00;
+  :focus-visible {
+    outline: 2px solid var(--color-secondary);
+    outline-offset: 4px;
+  }
 
-  /* --- Status: Returned for Revision --- */
-  --color-status-return-bg: #FBEAEA;
-  --color-status-return-text: #B83232;
+  ::selection {
+    color: var(--color-text-primary);
+    background: var(--color-border);
+  }
+}
 
-  /* --- Status: Approved --- */
-  --color-status-approve-bg: #E5F1FD;
-  --color-status-approve-text: #1D6FB8;
+@layer components {
+  .btn-primary, .btn-secondary {
+    display: inline-flex;
+    min-height: 36px;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    border-radius: 9999px;
+    padding: 8px 16px;
+    font-size: 14px;
+    line-height: 20px;
+    font-weight: 500;
+    transition: background-color 150ms, color 150ms;
+  }
 
-  /* --- Status: Active --- */
-  --color-status-active-bg: #E6F7EF;
-  --color-status-active-text: #14804F;
+  .btn-primary {
+    color: white;
+    background: var(--color-accent);
+  }
 
-  /* --- Status: Closing --- */
-  --color-status-closing-bg: #F1ECFD;
-  --color-status-closing-text: #6D3FC4;
+  .btn-primary:hover:not(:disabled) {
+    background: var(--color-accent-hover);
+  }
 
-  /* --- Status: Closed --- */
-  --color-status-closed-bg: #E8EAEE;
-  --color-status-closed-text: #3E4452;
+  .btn-secondary {
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+    background: white;
+  }
 
-  /* --- Legacy aliases (btn colors used before Figma sync) --- */
-  --color-brand: #4E5BA6;
-  --color-brand-hover: #3d4a8f;
+  .btn-secondary:hover:not(:disabled) {
+    background: var(--color-surface);
+  }
+
+  .btn-primary:disabled, .btn-secondary:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+  }
+
+  .icon-button {
+    display: inline-flex;
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    color: var(--color-neutral);
+    transition: background-color 150ms, color 150ms;
+  }
+
+  .icon-button:hover:not(:disabled) {
+    color: var(--color-text-primary);
+    background: var(--color-surface);
+  }
+
+  .form-input {
+    display: block;
+    width: 100%;
+    min-height: 44px;
+    border-radius: 0;
+    border-bottom: 1px solid var(--color-border);
+    background: var(--color-surface);
+    padding: 12px 16px;
+    color: var(--color-text-primary);
+    font-size: 14px;
+    line-height: 20px;
+    transition: border-color 150ms, background-color 150ms;
+  }
+
+  .form-input::placeholder {
+    color: var(--color-text-secondary);
+  }
+
+  .form-input:focus {
+    border-bottom-color: var(--color-text-primary);
+    outline: 2px solid var(--color-secondary);
+    outline-offset: 2px;
+  }
+
+  .form-input[aria-invalid="true"] {
+    border-bottom-color: var(--color-danger);
+  }
+
+  .form-input:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+
+  .notice-error {
+    border-left: 3px solid var(--color-danger);
+    background: var(--color-status-return-bg);
+    padding: 12px 16px;
+    color: var(--color-danger-text);
+    font-size: 14px;
+  }
+
+  .notice-success {
+    border-left: 3px solid var(--color-success);
+    background: var(--color-status-active-bg);
+    padding: 12px 16px;
+    color: var(--color-status-active-text);
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 639px) {
+  .btn-primary, .btn-secondary {
+    min-height: 44px;
+  }
+
+  .icon-button {
+    width: 44px;
+    height: 44px;
+  }
+
+  .form-input {
+    font-size: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
 }

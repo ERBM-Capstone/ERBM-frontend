@@ -1,58 +1,34 @@
-export default function AuthLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+import Brand from "@/components/layout/Brand";
+import { LuArrowDown, LuCheck } from "react-icons/lu";
+
+const WORKFLOW = ["ขอเงินทดรองจ่าย", "ยืนยันการจ่ายเงิน", "บันทึกค่าใช้จ่าย", "กระทบยอดและปิดบัญชี"];
+
+export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen bg-white">
-      {/* Left — dark branding panel */}
-      <div className="relative hidden w-[420px] shrink-0 flex-col justify-between overflow-hidden p-10 lg:flex" style={{ backgroundColor: "#111440" }}>
-        {/* Subtle grid overlay */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-[0.04]"
-          style={{
-            backgroundImage:
-              "linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px)",
-            backgroundSize: "40px 40px",
-          }}
-        />
-
-        {/* Logo */}
-        <div className="relative z-10">
-          <span className="inline-flex items-center gap-2 rounded-md bg-white/10 px-3 py-1.5 text-xs font-semibold tracking-widest text-white/80 uppercase">
-            ERBM
-          </span>
+    <div className="flex min-h-dvh bg-background lg:p-6">
+      <aside className="relative hidden w-[46%] max-w-[640px] shrink-0 flex-col justify-between rounded-xl bg-accent p-10 text-white lg:flex xl:p-12" aria-label="เกี่ยวกับ ERBM">
+        <Brand inverted />
+        <div className="my-16">
+          <h2 className="max-w-sm text-[32px] font-bold leading-[1.5]">จัดการค่าใช้จ่ายโครงการ<br />ให้เป็นเรื่องเดียวกัน</h2>
+          <p className="mt-4 max-w-sm text-sm leading-6 text-white/65">ตั้งแต่คำขอเงินทดรองจ่าย จนถึงการกระทบยอดและปิดบัญชี</p>
+          <ol className="mt-10 max-w-sm">
+            {WORKFLOW.map((step, index) => (
+              <li key={step} className="flex items-center gap-4 border-b border-white/15 py-4 last:border-0">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border border-white/25 text-xs text-white/75" aria-hidden>{index === WORKFLOW.length - 1 ? <LuCheck size={14} /> : index + 1}</span>
+                <span className="flex-1 text-sm font-medium">{step}</span>
+                {index < WORKFLOW.length - 1 && <LuArrowDown size={14} className="text-white/40" aria-hidden />}
+              </li>
+            ))}
+          </ol>
         </div>
+        <p className="text-xs text-white/60">Expense Reimbursement & Bill Management</p>
+      </aside>
 
-        {/* Hero copy */}
-        <div className="relative z-10 space-y-4">
-          <h2 className="text-4xl font-bold leading-tight tracking-tight text-white">
-            จัดการค่าใช้จ่ายโครงการ อย่างมีประสิทธิภาพ
-          </h2>
-          <p className="text-sm leading-relaxed text-white/50">
-            ระบบบริหารเงินทดรองจ่าย รายจ่าย และการปิดบัญชี
-          </p>
-        </div>
-
-        {/* Bottom decoration */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-white/5 blur-3xl"
-        />
-      </div>
-
-      {/* Right — form area */}
-      <div className="flex flex-1 flex-col items-center justify-center px-6 py-12">
-        {/* Mobile logo */}
-        <div className="mb-8 lg:hidden">
-          <span className="inline-flex items-center gap-2 rounded-md bg-zinc-900 px-3 py-1.5 text-xs font-semibold tracking-widest text-white uppercase">
-            ERBM
-          </span>
-        </div>
-
-        <div className="w-full max-w-sm">{children}</div>
-      </div>
+      <main id="main-content" className="flex min-w-0 flex-1 flex-col px-6 py-8 sm:px-12 lg:px-16 xl:px-24">
+        <div className="mb-16 lg:hidden"><Brand /></div>
+        <div className="mx-auto flex w-full max-w-sm flex-1 items-center py-8 lg:py-16"><div className="w-full">{children}</div></div>
+        <p className="mt-12 text-center text-xs text-text-secondary">ERBM · Sense Infotech</p>
+      </main>
     </div>
   );
 }

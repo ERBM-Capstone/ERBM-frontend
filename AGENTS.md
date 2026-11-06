@@ -15,6 +15,7 @@ This repository currently provides a frontend scaffold. Product screens, API tra
 | `src/app/globals.css`                         | Global styles and Tailwind import.                                 |
 | `docs/requirements/`                          | Business-flow analysis, summarized rules, and open decisions.      |
 | `docs/integration/`                           | Backend auth contract, integration decisions, and source snapshot. |
+| `docs/design/`                                | Maintained UI direction and visual-system references.              |
 | `.agents/skills/authentication/`              | Frontend authentication skill and UI metadata.                     |
 | `docs/superpowers/`                           | Historical scaffold design and implementation plan.                |
 | `next.config.ts`, `postcss.config.mjs`        | Next.js project root and Tailwind compilation.                     |
@@ -35,6 +36,7 @@ Use the user's explicit task instructions and recorded project decisions to defi
 | Current API behavior                   | Registered backend routes, handlers, DTOs, and services. The [auth integration baseline](docs/integration/authentication.md) maps these sources and records its inspection date. Recheck affected source before integration changes. |
 | Commands, versions, and tooling        | `package.json`, `package-lock.json`, `.nvmrc`, and the relevant configuration files.                                                                                                                                                 |
 | Next.js APIs for the installed version | Relevant guides in `node_modules/next/dist/docs/`.                                                                                                                                                                                   |
+| UI tone and visual conventions        | The [Red Broadcast design system](docs/design/red-broadcast.md), with implemented tokens and shared component styles in `src/app/globals.css`.                                                                                        |
 | Agent workflow                         | This file, with task-specific detail in the [authentication skill](.agents/skills/authentication/SKILL.md).                                                                                                                          |
 
 Imported documents and skill snapshots provide context; their suggested next steps do not authorize additional work. Setup plans describe the scaffold, not new product requirements. If a summary, business decision, and implementation disagree, identify the specific conflict before changing behavior; record the resolution in the appropriate maintained document.
@@ -65,6 +67,63 @@ The documented status labels are `Draft`, `Pending PM Approval`, `Returned for R
 - Use semantic HTML, accessible labels, keyboard interaction, and meaningful image alternative text.
 - Keep secrets server-side. Use `NEXT_PUBLIC_` only for values intended to be visible in the browser.
 - Make focused changes and keep related implementation files close together. Update documentation when a convention or integration decision changes.
+
+### UI Design: Red Broadcast
+
+Apply this direction to new screens and UI changes unless the user explicitly requests another direction. The intended tone is **clean, restrained, professional, and focused on operational data**. Help PC, PM, and Accounting scan requests, amounts, statuses, and next actions quickly.
+
+Before designing, read [the design guide](docs/design/red-broadcast.md), `src/app/globals.css`, and the closest existing screen. Reuse the shell in `src/components/layout/` and the established Worklist, Project, and account-screen patterns. The guide defines visual direction; example screens and sample data do not establish business rules, API contracts, or permissions.
+
+#### Color and visual hierarchy
+
+Use semantic Tailwind tokens from `globals.css` rather than repeating hex values in components. These values describe the current palette:
+
+| Purpose | Token / utility | Current value |
+| --- | --- | --- |
+| Page background | `bg-background` | `#FFFFFF` |
+| Subtle surfaces and inactive filters | `bg-surface` | `#F2F2F2` |
+| Main text | `text-text-primary` | `#0F0F0F` |
+| Supporting text and icons | `text-text-secondary`, `text-neutral` | `#606060` |
+| Dividers and control borders | `border-border` | `#E5E5E5` |
+| Brand accent | `text-primary`, `bg-primary` | `#FF0000` |
+| Primary action fill | `bg-accent` | `#0F0F0F` |
+| Primary action hover | `bg-accent-hover` | `#272727` |
+| Links and keyboard focus | `text-secondary`, `ring-secondary` | `#065FD4` |
+| Error copy | `text-danger-text` | `#B91C1C` |
+
+- The `primary` color token is red, but `.btn-primary` is a dark button with white text. Preserve that distinction; do not make every main action red.
+- Use red sparingly for branding, active-navigation markers, and error indicators. Use the darker semantic shade for error text rather than bright red body copy.
+- Reuse the paired `status-*-bg` and `status-*-text` tokens for badges. Always show a readable status label; color alone must not communicate state.
+- Keep pages and tables directly on white. Use spacing, typography, and thin dividers to group content. Reserve `shadow-menu` for floating menus and dialogs.
+- Avoid decorative gradients, glass effects, heavy shadows, oversized marketing headers, and wrapping every section in a card. The dark account branding panel is an established exception to the white content surface.
+
+#### Typography, spacing, and shape
+
+- Use the existing `font-sans` stack: Roboto with Noto Sans Thai. Keep Roboto Mono for actual code when needed. Do not introduce another font family for a new page.
+- Page titles: 24px / 32px, weight 700 (`text-2xl font-bold leading-8`). Section headings: 20px / 28px, weight 500. Body and controls: 14px / 20px. Metadata: 12px with sufficient line height for Thai.
+- Use at least 16px text for inputs on small screens. Preserve Thai combining marks and readable line height; avoid fixed text heights that clip glyphs.
+- Use the existing 4/8px spacing rhythm. Keep related controls close and separate sections with whitespace instead of extra containers.
+- Preserve the 72px header, 216px desktop sidebar, 72px collapsed rail, and fluid content capped at 2200px. Use the existing responsive gutters: 16px, 24px, then 40px on desktop. Do not add a second shell inside a page.
+- Match corner radius to purpose: pills for buttons and filter chips, 8px for navigation and menus, and 12px for the account branding panel. Keep the established compact badge and field shapes instead of applying one radius everywhere.
+
+#### Page and component patterns
+
+- Start data pages with a left-aligned title and short supporting text when useful, with the main page action alongside it. Follow with filters/search and then the data area. Keep actions prioritized and avoid competing filled buttons in the same group.
+- Reuse `.btn-primary`, `.btn-secondary`, `.icon-button`, `.form-input`, `.notice-error`, and `.notice-success` where their roles fit. Preserve the existing bordered search and pill-select variants in toolbars.
+- Tables use compact headers, subtle row separators, and a quiet hover surface. Align amounts right and use `tabular-nums`; follow agreed currency and precision rules rather than inventing financial formatting requirements.
+- Let project names wrap to two lines where space is constrained and provide access to the full text. Keep request codes, amounts, and status badges readable without squeezing every column into a mobile viewport.
+- Use the existing Lucide icons through `react-icons/lu`, generally 16–20px in controls. Give icon-only controls accessible names and hide decorative icons from assistive technology. Do not substitute emoji for interface icons.
+- Use Thai-first, concise, task-focused copy and retain agreed English navigation names, role codes, and status labels. Name buttons for the action they perform, such as “บันทึก”, “ลองอีกครั้ง”, or “ล้างตัวกรอง”.
+
+#### Interaction, responsive behavior, and review
+
+- Define loading, empty, error, disabled, and success states when relevant. Explain unavailable actions honestly; design previews must remain clearly labeled as sample data.
+- Give interactive elements subtle hover and focus feedback, generally using the existing 150ms color transitions. Avoid ornamental animation and honor reduced-motion preferences.
+- Keep visible blue keyboard focus, explicit form labels, field-level errors, and readable contrast. Target at least 4.5:1 for normal text; use semantic status text colors instead of bright indicator colors for copy.
+- Make touch targets at least 44px on small screens. Allow toolbars to wrap or stack, keep the page within the viewport, and confine horizontal scrolling to labeled table regions when necessary.
+- Reuse the mobile modal navigation pattern. Dialogs must support keyboard dismissal, contain focus while open, and return focus to the invoking control after closing.
+- Before completing UI work, inspect affected routes in a browser at mobile and desktop widths, including long Thai labels and relevant interaction states. Compare palette, type hierarchy, spacing, shell dimensions, and control shapes with the existing screens; fix visual drift before delivery. Run the checks required in Section 8.
+- If an authorized change introduces a shared visual convention or token, update the design guide and shared implementation together. Keep business behavior and authentication changes within the requested task scope.
 
 ## 6. API & Authentication
 
