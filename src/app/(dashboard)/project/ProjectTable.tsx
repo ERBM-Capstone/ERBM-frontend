@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { Project } from "@/lib/project/types";
 import { LuBriefcaseBusiness, LuCircleAlert, LuEye, LuPencil, LuRotateCw } from "react-icons/lu";
 
@@ -80,7 +81,7 @@ function ProjectRow({ project, canEdit }: { project: Project; canEdit: boolean }
       <td className="whitespace-nowrap px-3 py-5 align-top text-xs text-text-secondary">{formatThaiDate(project.created_at ?? project.start_date)}</td>
       <td className="py-3 pl-3 align-top">
         <div className="flex gap-1">
-          <button type="button" disabled aria-label={`ดูโครงการ ${project.project_code} ยังไม่พร้อมใช้งาน`} title="ดูโครงการยังไม่พร้อมใช้งาน" className="icon-button disabled:cursor-not-allowed disabled:opacity-40"><LuEye size={18} aria-hidden /></button>
+          <Link href={`/project/${project.id}`} aria-label={`ดูโครงการ ${project.project_code}`} title="ดูรายละเอียดโครงการ" className="icon-button"><LuEye size={18} aria-hidden /></Link>
           {canEdit && <button type="button" disabled aria-label={`แก้ไขโครงการ ${project.project_code} ยังไม่พร้อมใช้งาน`} title="แก้ไขโครงการยังไม่พร้อมใช้งาน" className="icon-button disabled:cursor-not-allowed disabled:opacity-40"><LuPencil size={18} aria-hidden /></button>}
         </div>
       </td>

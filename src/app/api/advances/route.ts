@@ -14,3 +14,19 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json(body, { status: response.status });
 }
+
+export async function POST(req: NextRequest) {
+  const authorization = req.headers.get("authorization");
+  const body = await req.json();
+  const response = await fetch(`${BACKEND_URL}/api/v1/advances`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      ...(authorization ? { Authorization: authorization } : {}),
+    },
+    body: JSON.stringify(body),
+  });
+  const result = await response.json();
+
+  return NextResponse.json(result, { status: response.status });
+}
