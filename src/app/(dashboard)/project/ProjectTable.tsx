@@ -75,7 +75,7 @@ function ProjectRow({ project, canEdit }: { project: Project; canEdit: boolean }
         </span>
       </td>
       <td className="px-3 py-5 align-top">
-        {project.active_advance ? <div><p className="text-xs text-text-secondary">มีเงินทดรอง</p><p className="mt-1 font-medium tabular-nums">฿{Number(project.active_advance.amount).toLocaleString("th-TH")}</p></div> : <span className="text-xs text-text-secondary">ไม่มี</span>}
+        {project.active_advance === undefined ? <span className="text-xs text-text-secondary">ไม่พร้อมใช้งาน</span> : project.active_advance ? <div><p className="text-xs text-text-secondary">มีเงินทดรอง</p><p className="mt-1 font-medium tabular-nums">฿{Number(project.active_advance.amount).toLocaleString("th-TH")}</p></div> : <span className="text-xs text-text-secondary">ไม่มี</span>}
       </td>
       <td className="whitespace-nowrap px-3 py-5 align-top text-xs text-text-secondary">{formatThaiDate(project.created_at ?? project.start_date)}</td>
       <td className="py-3 pl-3 align-top">

@@ -32,7 +32,7 @@ Red is a restrained brand and error accent. Primary actions use dark fills as sp
 - Branding and navigation: `src/components/layout/`.
 - Application and account screens: `src/app/(dashboard)/` and `src/app/(auth)/`.
 
-The Project page's search, status chips, retry, and pagination use the existing project-list endpoint. Its PM filter and project view/edit controls remain unavailable until their corresponding interfaces are implemented. The existing create-project form still uses its original sample PM, PC, and department options.
+The Project page's search, status chips, PM/PC filters, active-advance filter, retry, and pagination use the existing project and advance list endpoints. Project view/edit controls remain unavailable until their corresponding interfaces are implemented. The existing create-project form still uses its original sample PM, PC, and department options.
 
 The Worklist follows the Figma reference as a clearly labeled design preview. Its seven example requests live in `src/app/(dashboard)/worklist/example-data.ts`; search, status/project filtering, sorting, empty states, and read-only detail dialogs operate on those examples. They are not authenticated account data or a new advance API integration. Opening an example never changes its status. The create-request button explains the preview boundary and links to the existing Project page; it does not submit or change a request. All seven documented status labels, including Closing, are retained for visual review without establishing new API enum mappings or workflow permissions.
 
