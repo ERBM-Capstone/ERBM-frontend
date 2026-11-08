@@ -16,6 +16,7 @@ interface AdvanceListItem {
   purpose: string;
   amount: string;
   status: string;
+  created_by: number;
   created_at: string;
 }
 
@@ -191,7 +192,7 @@ export default function ProjectInformationPage() {
             action={canCreateAdvance ? <button type="button" className="btn-primary" onClick={() => setIsCreateAdvanceOpen(true)}><LuPlus size={17} aria-hidden />สร้างเงินทดรองจ่าย</button> : undefined}
           />
           <AdvanceSection title="ประวัติเงินทดรอง (Advance History)" advances={advanceHistory} />
-          {isCreateAdvanceOpen && <CreateAdvanceDialog projectId={project.id} onClose={() => setIsCreateAdvanceOpen(false)} onCreated={() => { setIsCreateAdvanceOpen(false); setSuccessMessage("สร้างรายการเงินทดรองฉบับร่างแล้ว"); setReloadVersion((version) => version + 1); }} />}
+          {isCreateAdvanceOpen && <CreateAdvanceDialog projectId={project.id} onClose={() => setIsCreateAdvanceOpen(false)} onCreated={(advanceId, submitted, submitError) => { setIsCreateAdvanceOpen(false); setSuccessMessage(submitError ? `บันทึกฉบับร่างแล้ว แต่ส่งไม่สำเร็จ: ${submitError} เปิดรายละเอียดเพื่อส่งอีกครั้งได้` : submitted ? `บันทึกและส่งคำขอ ${advanceId} ให้ PM แล้ว` : `สร้างคำขอ ${advanceId} เป็นฉบับร่างแล้ว`); setReloadVersion((version) => version + 1); }} />}
         </>
       ) : null}
     </div>
@@ -239,7 +240,7 @@ function AdvanceSection({ title, advances, action }: { title: string; advances: 
   );
 }
 
-function CreateAdvanceDialog({ projectId, onClose, onCreated }: { projectId: number; onClose: () => void; onCreated: () => void }) {
+function CreateAdvanceDialog({ projectId, onClose, onCreated }: { projectId: number; onClose: () => void; onCreated: (advanceId: number, submitted: boolean, submitError?: string) => void }) {
   const { getToken } = useAuth();
   const [amount, setAmount] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -255,6 +256,8 @@ function CreateAdvanceDialog({ projectId, onClose, onCreated }: { projectId: num
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const submitter = (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
+    const shouldSubmit = submitter?.value === "submit";
     const trimmedAmount = amount.trim();
     if (!/^\d{1,13}(\.\d{1,2})?$/.test(trimmedAmount) || Number(trimmedAmount) <= 0) {
       return setError("กรุณาระบุจำนวนเงินมากกว่า 0 และมีทศนิยมไม่เกิน 2 ตำแหน่ง");
@@ -274,7 +277,25 @@ function CreateAdvanceDialog({ projectId, onClose, onCreated }: { projectId: num
         throw new Error("ระบบส่งผลการสร้างกลับมาไม่ถูกต้อง");
       });
       if (!response.ok) throw new Error(result.message ?? "สร้างเงินทดรองไม่สำเร็จ");
-      onCreated();
+      const advanceId = Number(result.data?.id);
+      if (!Number.isInteger(advanceId) || advanceId <= 0) throw new Error("สร้างรายการแล้วแต่ไม่ได้รับรหัสคำขอ กรุณาตรวจสอบในรายการเงินทดรอง");
+      if (shouldSubmit) {
+        try {
+          const submitResponse = await fetch(`/api/advances/${advanceId}/submit`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          const submitResult = await submitResponse.json().catch(() => {
+            throw new Error("ระบบส่งผลการส่งคำขอกลับมาไม่ถูกต้อง");
+          });
+          if (!submitResponse.ok) throw new Error(submitResult.message ?? "ส่งคำขอให้ PM ไม่สำเร็จ");
+          onCreated(advanceId, true);
+        } catch (submitError) {
+          onCreated(advanceId, false, submitError instanceof Error ? submitError.message : "ส่งคำขอให้ PM ไม่สำเร็จ");
+        }
+      } else {
+        onCreated(advanceId, false);
+      }
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : "สร้างเงินทดรองไม่สำเร็จ กรุณาลองอีกครั้ง");
     } finally {
@@ -288,7 +309,7 @@ function CreateAdvanceDialog({ projectId, onClose, onCreated }: { projectId: num
         <div className="mb-6 flex items-start justify-between gap-4">
           <div>
             <h2 id="create-advance-title" className="text-xl font-semibold">สร้างเงินทดรองจ่าย</h2>
-            <p className="mt-1 text-sm text-text-secondary">ระบบจะสร้างรายการเป็นฉบับร่าง</p>
+            <p className="mt-1 text-sm text-text-secondary">เลือกบันทึกเป็นฉบับร่าง หรือส่งให้ PM อนุมัติทันที</p>
           </div>
           <button type="button" className="icon-button -mr-2 -mt-2" aria-label="ปิด" disabled={isSubmitting} onClick={onClose}><LuX size={18} aria-hidden /></button>
         </div>
@@ -298,9 +319,10 @@ function CreateAdvanceDialog({ projectId, onClose, onCreated }: { projectId: num
             <input id="advance-amount" required inputMode="decimal" value={amount} onChange={(event) => setAmount(event.target.value)} className="form-input rounded-lg border border-border bg-white" placeholder="เช่น 150000.00" />
           </div>
           {error && <div role="alert" className="notice-error rounded-lg">{error}</div>}
-          <div className="flex flex-col-reverse justify-end gap-3 border-t border-border pt-5 sm:flex-row">
+          <div className="flex flex-col-reverse justify-end gap-3 border-t border-border pt-5 sm:flex-row sm:flex-wrap">
             <button type="button" className="btn-secondary" disabled={isSubmitting} onClick={onClose}>ยกเลิก</button>
-            <button type="submit" className="btn-primary" disabled={isSubmitting}><LuPlus size={16} aria-hidden />{isSubmitting ? "กำลังสร้าง…" : "สร้างฉบับร่าง"}</button>
+            <button type="submit" name="action" value="draft" className="btn-secondary" disabled={isSubmitting}><LuPlus size={16} aria-hidden />สร้างฉบับร่าง</button>
+            <button type="submit" name="action" value="submit" className="btn-primary" disabled={isSubmitting}><LuPlus size={16} aria-hidden />{isSubmitting ? "กำลังบันทึกและส่ง…" : "บันทึกแล้วส่งให้ PM"}</button>
           </div>
         </form>
       </section>
@@ -311,7 +333,7 @@ function CreateAdvanceDialog({ projectId, onClose, onCreated }: { projectId: num
 function AdvanceRow({ advance }: { advance: AdvanceListItem }) {
   return (
     <tr className="border-t border-border transition-colors hover:bg-surface/50">
-      <td className="whitespace-nowrap px-4 py-5 font-medium">{advance.advance_code}</td>
+      <td className="whitespace-nowrap px-4 py-5 font-medium"><Link href={`/advance/${advance.id}`} className="text-accent hover:underline focus-visible:rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-secondary" aria-label={`ดูรายละเอียดคำขอ ${advance.advance_code}`}>{advance.advance_code}</Link></td>
       <td className="px-4 py-5 text-text-secondary">{advance.requester.first_name} {advance.requester.last_name}</td>
       <td className="whitespace-nowrap px-4 py-5 font-medium tabular-nums">{formatAmount(advance.amount)}</td>
       <td className="px-4 py-5"><AdvanceStatus status={advance.status} /></td>
