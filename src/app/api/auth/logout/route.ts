@@ -15,7 +15,11 @@ export async function POST(req: NextRequest) {
   // Forward the cookie-clearing header from backend
   const setCookie = upstream.headers.get("set-cookie");
   if (setCookie) {
-    res.headers.set("set-cookie", setCookie);
+    // Clear the browser cookie using the same path applied by the login proxy.
+    res.headers.set(
+      "set-cookie",
+      setCookie.replace(/(;\s*Path=)[^;]*/i, "$1/api/auth")
+    );
   }
 
   return res;

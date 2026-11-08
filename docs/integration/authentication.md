@@ -57,6 +57,7 @@ Errors have `success: false` and `message`, with optional `errors`; `data` may b
 ## Session and account behavior
 
 - The refresh cookie is named `refresh_token`, uses `HttpOnly` and `SameSite=Lax`, and has path `/api/v1/auth`. `Secure` is controlled by the backend's `REFRESH_COOKIE_SECURE` setting. Browser JavaScript cannot read the refresh token.
+- The frontend uses same-origin Next.js proxies at `/api/auth/*`. The login proxy rewrites the browser cookie path to `/api/auth` so it is sent to the refresh/logout proxy routes, while forwarding the cookie value to the backend. Logout applies the same path when forwarding the backend's cookie-clearing response.
 - Default access-token lifetime is 15 minutes; default refresh lifetime is 168 hours. Use the returned access-token lifetime rather than hard-coding expiration.
 - Login and refresh require an account with status `ACTIVE`. Other account states are `INVITED` and `DEACTIVATED`.
 - Unknown email, incorrect credentials, live lockout, missing password hash, and inactive account all produce the current login error `401` / `invalid email or password`. Do not assume an account-specific error or a lockout countdown is returned. Defaults are 10 failed attempts and a 3-minute lock; these are backend-configurable.
@@ -97,13 +98,13 @@ For Admin invitation forms, `POST /api/v1/employees` accepts a non-empty JSON ar
 - `POST /api/v1/employees/:id/resend-activation` is Admin-only. It returns bodyless `204` on success, `404` for a missing account, `409` when activation is unavailable, or `502` for email delivery failure. On that delivery failure the replacement token remains committed and old links are invalidated.
 - Profile PATCH currently accepts only first name, last name, position, and email. It does not support changing role, hire date, or employment end date.
 
-## Integration decisions and checks
+## Current integration decisions and remaining checks
 
 | Topic | Decision/check needed before frontend implementation |
 | --- | --- |
-| Transport | Choose direct browser-to-backend requests or a same-origin proxy/BFF, and define environment-specific API origins. |
-| Access token | Decide client/server ownership, persistence, session restoration, refresh coordination, and bounded retries. |
-| Cookies | Verify path/origin, Secure/SameSite behavior, and cookie handling through any proxy. |
+| Transport | Use same-origin Next.js Route Handler proxies at `/api/auth/*`; configure the backend origin with `BACKEND_URL`. |
+| Access token | Keep the access token in the in-memory auth context and restore sessions through the HttpOnly refresh cookie; coordinate concurrent refresh calls and bound waits. |
+| Cookies | Rewrite the backend cookie path `/api/v1/auth` to `/api/auth` at the browser boundary, preserve its HttpOnly/SameSite/Secure attributes, and forward the cookie to the backend. Verify `Secure` behavior for each environment. |
 | Activation UI | Define the route matching `FRONTEND_ACTIVATION_URL`, success navigation, and invalid/expired-token and resend states. |
 | Route/UI guards | Define role-aware navigation and inactive-session handling while preserving backend authorization. |
 | Live verification | Check login, refresh after reload/expiry, logout, activation, `204` handling, unauthorized/forbidden responses, and cookie/CORS behavior in the browser. |

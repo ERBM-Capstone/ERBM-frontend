@@ -37,7 +37,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Shared refresh helper — updates state and returns the new token.
   const doRefresh = useCallback(async (): Promise<string | null> => {
     try {
-      const res = await fetch("/api/auth/refresh", { method: "POST" });
+      const res = await fetch("/api/auth/refresh", {
+        method: "POST",
+        signal: AbortSignal.timeout(8_000),
+      });
       if (!res.ok) return null;
       const json = await res.json();
       const { access_token, expires_in } = json.data as {
@@ -48,6 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const meRes = await fetch("/api/auth/me", {
         headers: { Authorization: `Bearer ${access_token}` },
+        signal: AbortSignal.timeout(8_000),
       });
       const user: User | null = meRes.ok ? (await meRes.json()).data : null;
 
@@ -65,8 +69,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let active = true;
 
     async function restore() {
-      await doRefresh();
-      if (active) setIsLoading(false);
+      const request = refreshPromise.current ?? doRefresh();
+      refreshPromise.current = request;
+      try {
+        await request;
+      } finally {
+        if (refreshPromise.current === request) refreshPromise.current = null;
+        if (active) setIsLoading(false);
+      }
     }
 
     restore();

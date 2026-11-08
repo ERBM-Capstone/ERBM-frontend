@@ -18,7 +18,12 @@ export async function POST(req: NextRequest) {
   // Forward the HttpOnly refresh_token cookie set by the backend
   const setCookie = upstream.headers.get("set-cookie");
   if (setCookie) {
-    res.headers.set("set-cookie", setCookie);
+    // The backend scopes the cookie to /api/v1/auth, but the browser talks to
+    // this same-origin proxy at /api/auth. Align the browser path with the proxy.
+    res.headers.set(
+      "set-cookie",
+      setCookie.replace(/(;\s*Path=)[^;]*/i, "$1/api/auth")
+    );
   }
 
   return res;

@@ -2,10 +2,10 @@
 
 import { useAuth } from "@/lib/auth/context";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { login, user, isLoading } = useAuth();
   const router = useRouter();
 
   const [email, setEmail] = useState("");
@@ -13,18 +13,30 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  useEffect(() => {
+    if (!isLoading && user) router.replace("/worklist");
+  }, [isLoading, user, router]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setIsSubmitting(true);
     try {
       await login(email.trim(), password);
-      router.replace("/");
+      router.replace("/worklist");
     } catch (err) {
       setError(err instanceof Error ? err.message : "เกิดข้อผิดพลาด กรุณาลองใหม่");
     } finally {
       setIsSubmitting(false);
     }
+  }
+
+  if (isLoading || user) {
+    return (
+      <div className="flex min-h-48 items-center justify-center" role="status">
+        <span className="text-sm text-text-secondary">กำลังตรวจสอบการเข้าสู่ระบบ…</span>
+      </div>
+    );
   }
 
   return (

@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 
-// Root "/" redirects to "/worklist" as the default dashboard page
+// Start at login. The login route restores any existing session and forwards
+// authenticated users to the worklist.
 export default function DashboardIndex() {
-  redirect("/worklist");
+  redirect("/login");
 }
