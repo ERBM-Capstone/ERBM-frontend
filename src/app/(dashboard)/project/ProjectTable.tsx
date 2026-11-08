@@ -17,7 +17,7 @@ function formatThaiDate(dateStr: string | null | undefined): string {
   return date.toLocaleDateString("th-TH", { day: "numeric", month: "short", year: "numeric" });
 }
 
-const HEADERS = ["รหัสโปรเจค", "ชื่อโปรเจค", "ผู้จัดการ (PM)", "ผู้ประสานงาน (PC)", "สถานะ", "เงินทดรองที่ใช้งาน", "วันที่สร้าง"];
+const HEADERS = ["รหัสโปรเจค", "ชื่อโปรเจค", "ผู้จัดการ (PM)", "ผู้ประสานงาน (PC)", "สถานะ", "เงินทดรองที่ใช้งาน", "วันที่เริ่ม"];
 
 export default function ProjectTable({ projects, isLoading, error, canEdit, onRetry }: Props) {
   if (error) {
@@ -78,7 +78,7 @@ function ProjectRow({ project, canEdit }: { project: Project; canEdit: boolean }
       <td className="px-3 py-5 align-top">
         {project.active_advance === undefined ? <span className="text-xs text-text-secondary">ไม่พร้อมใช้งาน</span> : project.active_advance ? <div><p className="text-xs text-text-secondary">มีเงินทดรอง</p><p className="mt-1 font-medium tabular-nums">฿{Number(project.active_advance.amount).toLocaleString("th-TH")}</p></div> : <span className="text-xs text-text-secondary">ไม่มี</span>}
       </td>
-      <td className="whitespace-nowrap px-3 py-5 align-top text-xs text-text-secondary">{formatThaiDate(project.created_at ?? project.start_date)}</td>
+      <td className="whitespace-nowrap px-3 py-5 align-top text-xs text-text-secondary">{formatThaiDate(project.start_date)}</td>
       <td className="py-3 pl-3 align-top">
         <div className="flex gap-1">
           <Link href={`/project/${project.id}`} aria-label={`ดูโครงการ ${project.project_code}`} title="ดูรายละเอียดโครงการ" className="icon-button"><LuEye size={18} aria-hidden /></Link>

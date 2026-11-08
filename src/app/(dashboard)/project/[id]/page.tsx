@@ -177,7 +177,8 @@ export default function ProjectInformationPage() {
                 <ProjectField label="ผู้จัดการโปรเจค" value={`${project.pm.first_name} ${project.pm.last_name}`} />
                 <ProjectField label="ผู้ประสานงาน" value={project.pc ? `${project.pc.first_name} ${project.pc.last_name}` : "—"} />
                 <ProjectField label="แผนก" value={project.department?.trim() || "—"} />
-                <ProjectField label="วันที่สร้าง" value={formatDate(project.created_at)} />
+                <ProjectField label="วันที่เริ่มต้น" value={formatDate(project.start_date)} />
+                <ProjectField label="วันที่สิ้นสุด" value={formatDate(project.end_date)} />
                 {project.description && <ProjectField label="หมายเหตุ" value={project.description} />}
               </dl>
             )}

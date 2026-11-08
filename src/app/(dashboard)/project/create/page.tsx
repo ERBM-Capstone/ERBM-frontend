@@ -7,12 +7,7 @@ import { LuArrowLeft, LuCheck, LuChevronRight } from "react-icons/lu";
 import { useAuth } from "@/lib/auth/context";
 import DropdownSelect from "@/components/ui/DropdownSelect";
 import { fetchAllPages } from "@/lib/project/fetch-all-pages";
-import type { Project, ProjectMember } from "@/lib/project/types";
-
-interface EmployeeSummary {
-  email: string;
-  is_active: boolean;
-}
+import type { ProjectMember } from "@/lib/project/types";
 
 const MOCK_DEPT = [
   { id: "IT", label: "เทคโนโลยีสารสนเทศ" },
@@ -65,17 +60,21 @@ interface FormErrors {
   name?: string;
   pm_user_id?: string;
   pc_user_id?: string;
+  start_date?: string;
+  end_date?: string;
 }
 
 const FIELD_IDS: Record<keyof FormErrors, string> = {
   name: "project-name",
   pm_user_id: "project-pm",
   pc_user_id: "project-pc",
+  start_date: "project-start-date",
+  end_date: "project-end-date",
 };
 
 export default function CreateProjectPage() {
   const router = useRouter();
-  const { getToken, user, isLoading: isAuthLoading } = useAuth();
+  const { getToken, isLoading: isAuthLoading } = useAuth();
   const formRef = useRef<HTMLFormElement>(null);
   const [pmOptions, setPmOptions] = useState<ProjectMember[]>([]);
   const [pcOptions, setPcOptions] = useState<ProjectMember[]>([]);
@@ -104,36 +103,19 @@ export default function CreateProjectPage() {
 
     async function loadAssignees() {
       try {
-        if (user?.role_code !== "ADMIN") {
-          throw new Error("เฉพาะผู้ดูแลระบบเท่านั้นที่โหลดรายชื่อผู้รับผิดชอบได้");
-        }
         const token = await getToken();
         if (!token) throw new Error("เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่");
 
-        const [employees, projects] = await Promise.all([
-          fetchAllPages<EmployeeSummary>("/api/employees", new URLSearchParams(), token, controller.signal),
-          fetchAllPages<Project>("/api/projects", new URLSearchParams(), token, controller.signal),
+        const [pms, pcs] = await Promise.all([
+          fetchAllPages<ProjectMember>("/api/projects/assignees", new URLSearchParams({ role: "PM" }), token, controller.signal),
+          fetchAllPages<ProjectMember>("/api/projects/assignees", new URLSearchParams({ role: "PC" }), token, controller.signal),
         ]);
-        const activeEmails = new Set(
-          employees.filter((employee) => employee.is_active).map((employee) => employee.email.trim().toLowerCase()),
-        );
-        const activePMs = new Map<number, ProjectMember>();
-        const activePCs = new Map<number, ProjectMember>();
-
-        for (const project of projects) {
-          if (activeEmails.has(project.pm.email.trim().toLowerCase())) {
-            activePMs.set(project.pm.user_id, project.pm);
-          }
-          if (project.pc && activeEmails.has(project.pc.email.trim().toLowerCase())) {
-            activePCs.set(project.pc.user_id, project.pc);
-          }
-        }
 
         const sortByName = (a: ProjectMember, b: ProjectMember) =>
           `${a.first_name} ${a.last_name}`.localeCompare(`${b.first_name} ${b.last_name}`, "th");
         if (active) {
-          setPmOptions([...activePMs.values()].sort(sortByName));
-          setPcOptions([...activePCs.values()].sort(sortByName));
+          setPmOptions(pms.sort(sortByName));
+          setPcOptions(pcs.sort(sortByName));
           setAssigneeError(null);
         }
       } catch (error) {
@@ -158,7 +140,7 @@ export default function CreateProjectPage() {
       controller.abort();
       window.clearTimeout(timeout);
     };
-  }, [assigneeReload, getToken, isAuthLoading, user?.role_code]);
+  }, [assigneeReload, getToken, isAuthLoading]);
 
   function set(field: keyof FormValues, value: string) {
     setValues((prev) => ({ ...prev, [field]: value }));
@@ -172,6 +154,9 @@ export default function CreateProjectPage() {
     if (!values.name.trim()) e.name = "กรุณาระบุชื่อโปรเจค";
     if (!values.pm_user_id) e.pm_user_id = "กรุณาเลือกผู้จัดการโปรเจค";
     if (!values.pc_user_id) e.pc_user_id = "กรุณาเลือกผู้ประสานงานโปรเจค";
+    if (values.start_date && values.end_date && values.end_date < values.start_date) {
+      e.end_date = "วันที่สิ้นสุดต้องไม่อยู่ก่อนวันที่เริ่ม";
+    }
     return e;
   }
 
@@ -266,6 +251,36 @@ export default function CreateProjectPage() {
               />
             </Field>
 
+          </div>
+
+          <h2 className="border-t border-border pt-8 text-xl font-medium leading-7">ระยะเวลาโครงการ</h2>
+          <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+            <Field id="project-start-date" label="วันที่เริ่ม" subLabel="Start Date (ถ้ามี)" error={errors.start_date}>
+              <input
+                id="project-start-date"
+                type="date"
+                value={values.start_date}
+                max={values.end_date || undefined}
+                aria-invalid={!!errors.start_date}
+                aria-describedby={`project-start-date-hint${errors.start_date ? " project-start-date-error" : ""}`}
+                onChange={(event) => set("start_date", event.target.value)}
+                className={inputCls(!!errors.start_date)}
+                disabled={isSubmitting}
+              />
+            </Field>
+            <Field id="project-end-date" label="วันที่สิ้นสุด" subLabel="End Date (ถ้ามี)" error={errors.end_date}>
+              <input
+                id="project-end-date"
+                type="date"
+                value={values.end_date}
+                min={values.start_date || undefined}
+                aria-invalid={!!errors.end_date}
+                aria-describedby={`project-end-date-hint${errors.end_date ? " project-end-date-error" : ""}`}
+                onChange={(event) => set("end_date", event.target.value)}
+                className={inputCls(!!errors.end_date)}
+                disabled={isSubmitting}
+              />
+            </Field>
           </div>
 
           <h2 className="border-t border-border pt-8 text-xl font-medium leading-7">ผู้รับผิดชอบ</h2>
