@@ -15,16 +15,36 @@ interface DropdownSelectProps {
   options: DropdownOption[];
   onChange: (value: string) => void;
   disabled?: boolean;
+  placeholder?: string;
+  showLabel?: boolean;
+  hasError?: boolean;
+  className?: string;
+  describedBy?: string;
 }
 
-export default function DropdownSelect({ id, label, value, options, onChange, disabled = false }: DropdownSelectProps) {
+export default function DropdownSelect({
+  id,
+  label,
+  value,
+  options,
+  onChange,
+  disabled = false,
+  placeholder = "เลือก",
+  showLabel = true,
+  hasError = false,
+  className = "",
+  describedBy,
+}: DropdownSelectProps) {
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const optionRefs = useRef<(HTMLButtonElement | null)[]>([]);
-  const selectedIndex = Math.max(0, options.findIndex((option) => option.value === value));
-  const selectedOption = options[selectedIndex] ?? { label: "เลือก", value: "" };
+  const foundSelectedIndex = options.findIndex((option) => option.value === value);
+  const selectedIndex = Math.max(0, foundSelectedIndex);
+  const selectedOption = foundSelectedIndex >= 0
+    ? options[foundSelectedIndex]
+    : { label: placeholder, value: "" };
 
   useEffect(() => {
     if (!open) return;
@@ -40,6 +60,7 @@ export default function DropdownSelect({ id, label, value, options, onChange, di
   }, [open, activeIndex]);
 
   function openMenu(index = selectedIndex) {
+    if (options.length === 0) return;
     setActiveIndex(index);
     setOpen(true);
   }
@@ -69,14 +90,15 @@ export default function DropdownSelect({ id, label, value, options, onChange, di
   }
 
   return (
-    <div ref={containerRef} className={`relative flex h-11 min-w-0 items-center gap-2 rounded-lg border px-3 transition-colors focus-within:border-secondary focus-within:ring-2 focus-within:ring-secondary/30 ${value ? "border-accent bg-white" : "border-border bg-surface"} ${open ? "border-secondary ring-2 ring-secondary/30" : "hover:border-neutral"}`}>
-      <span className="shrink-0 text-xs font-medium text-text-secondary" aria-hidden>{label}</span>
+    <div ref={containerRef} className={`relative flex h-11 min-w-0 items-center gap-2 rounded-lg border px-3 transition-colors focus-within:border-secondary focus-within:ring-2 focus-within:ring-secondary/30 ${showLabel && value ? "border-accent bg-white" : "border-border bg-white"} ${hasError ? "border-danger" : ""} ${open ? "border-secondary ring-2 ring-secondary/30" : "hover:border-neutral"} ${className}`}>
+      {showLabel && <span className="shrink-0 text-xs font-medium text-text-secondary" aria-hidden>{label}</span>}
       <button
         ref={triggerRef}
         id={id}
         type="button"
-        disabled={disabled}
+        disabled={disabled || options.length === 0}
         aria-label={`${label}: ${selectedOption.label}`}
+        aria-describedby={describedBy}
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={`${id}-options`}
@@ -92,7 +114,7 @@ export default function DropdownSelect({ id, label, value, options, onChange, di
         <span className="truncate">{selectedOption.label}</span>
         <LuChevronDown size={14} className={`shrink-0 text-text-secondary transition-transform ${open ? "rotate-180" : ""}`} aria-hidden />
       </button>
-      {open && !disabled && (
+      {open && !disabled && options.length > 0 && (
         <div id={`${id}-options`} role="listbox" aria-label={`ตัวเลือก ${label}`} className="absolute left-0 right-0 top-full z-30 mt-2 max-h-64 min-w-full overflow-y-auto rounded-xl border border-border bg-white p-1 shadow-menu">
           {options.map((option, index) => {
             const selected = option.value === value;

@@ -28,11 +28,12 @@ Red is a restrained brand and error accent. Primary actions use dark fills as sp
 ## Shared implementation
 
 - Tokens, field styles, buttons, notices, focus states, and reduced-motion handling: `src/app/globals.css`.
+- Use the keyboard-accessible `DropdownSelect` in `src/components/ui/DropdownSelect.tsx` for filters, sorting, and form choices instead of native `<select>` controls.
 - Fonts: `src/app/layout.tsx`.
 - Branding and navigation: `src/components/layout/`.
 - Application and account screens: `src/app/(dashboard)/` and `src/app/(auth)/`.
 
-The Project page's search, status chips, PM/PC filters, active-advance filter, retry, and pagination use the existing project and advance list endpoints. The project detail page keeps project information collapsible and groups live advances into pending requests and history. Assigned PCs can create advance drafts from their active projects, and authorized users can edit project fields supported by the current API. Department is not part of the current project API. The existing create-project form still uses its original sample PM, PC, and department options.
+The Project page's search, status chips, PM/PC filters, active-advance filter, retry, and pagination use the existing project and advance list endpoints. The project detail page keeps project information collapsible and groups live advances into pending requests and history. Assigned PCs can create advance drafts from their active projects, and authorized users can edit project fields supported by the current API. Department is not part of the current project API. The create-project form loads active employees and derives PM/PC options from existing project assignments; department choices remain sample data because the project API does not support that field. People without an existing PM/PC project assignment are not available in these options until the backend exposes a role-aware assignee list.
 
 The Worklist follows the Figma reference as a clearly labeled design preview. Its seven example requests live in `src/app/(dashboard)/worklist/example-data.ts`; search, status/project filtering, sorting, empty states, and read-only detail dialogs operate on those examples. They are not authenticated account data or a new advance API integration. Opening an example never changes its status. The create-request button explains the preview boundary and links to the existing Project page; it does not submit or change a request. All seven documented status labels, including Closing, are retained for visual review without establishing new API enum mappings or workflow permissions.
 

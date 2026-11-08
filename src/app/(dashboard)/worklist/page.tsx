@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { LuChevronDown, LuFileText, LuFolderClosed, LuSearch, LuX } from "react-icons/lu";
+import { LuFileText, LuFolderClosed, LuSearch, LuX } from "react-icons/lu";
+import DropdownSelect from "@/components/ui/DropdownSelect";
 import { WORKLIST_EXAMPLES, type WorklistExample, type WorklistStatus } from "./example-data";
 
 const FILTERS: { label: string; status: WorklistStatus | "all" }[] = [
@@ -135,24 +136,28 @@ export default function WorklistPage() {
           <label htmlFor="worklist-search" className="sr-only">ค้นหาเลขที่หรือโปรเจค</label>
           <input id="worklist-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="ค้นหาเลขที่ / โปรเจค" className="h-11 w-full rounded border border-border bg-white pl-11 pr-4 text-base placeholder:text-text-secondary focus:border-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-secondary sm:text-sm" />
         </div>
-        <div className="relative">
-          <label htmlFor="worklist-project" className="sr-only">กรองโปรเจค</label>
-          <select id="worklist-project" value={project} onChange={(event) => setProject(event.target.value)} className="h-11 w-full appearance-none rounded-full border border-border bg-white pl-4 pr-10 text-sm text-text-secondary">
-            <option value="all">ทุกโปรเจค</option>
-            {PROJECTS.map((item) => <option key={item.code} value={item.code}>{item.name}</option>)}
-          </select>
-          <LuChevronDown size={16} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-neutral" aria-hidden />
-        </div>
-        <div className="relative">
-          <label htmlFor="worklist-sort" className="sr-only">เรียงลำดับคำขอ</label>
-          <select id="worklist-sort" value={sortOrder} onChange={(event) => setSortOrder(event.target.value as SortOrder)} className="h-11 w-full appearance-none rounded-full border border-border bg-white pl-4 pr-10 text-sm text-text-secondary">
-            <option value="latest">เรียงล่าสุด</option>
-            <option value="oldest">เรียงเก่าสุด</option>
-            <option value="amount-desc">จำนวนเงินมากที่สุด</option>
-            <option value="amount-asc">จำนวนเงินน้อยที่สุด</option>
-          </select>
-          <LuChevronDown size={16} className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-neutral" aria-hidden />
-        </div>
+        <DropdownSelect
+          id="worklist-project"
+          label="โปรเจค"
+          value={project}
+          options={[
+            { label: "ทุกโปรเจค", value: "all" },
+            ...PROJECTS.map((item) => ({ label: item.name, value: item.code })),
+          ]}
+          onChange={setProject}
+        />
+        <DropdownSelect
+          id="worklist-sort"
+          label="เรียงลำดับ"
+          value={sortOrder}
+          options={[
+            { label: "เรียงล่าสุด", value: "latest" },
+            { label: "เรียงเก่าสุด", value: "oldest" },
+            { label: "จำนวนเงินมากที่สุด", value: "amount-desc" },
+            { label: "จำนวนเงินน้อยที่สุด", value: "amount-asc" },
+          ]}
+          onChange={(value) => setSortOrder(value as SortOrder)}
+        />
       </div>
 
       <section aria-labelledby="advance-list-title" className="pt-1">

@@ -12,7 +12,6 @@ export interface Project {
   project_code: string;
   name: string;
   description: string;
-  budget: string;
   pm: ProjectMember;
   pc: ProjectMember | null;
   status: ProjectStatus;

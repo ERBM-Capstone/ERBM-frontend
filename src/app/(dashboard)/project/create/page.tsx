@@ -1,22 +1,19 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { LuArrowLeft, LuCheck, LuChevronRight } from "react-icons/lu";
 import { useAuth } from "@/lib/auth/context";
+import DropdownSelect from "@/components/ui/DropdownSelect";
+import { fetchAllPages } from "@/lib/project/fetch-all-pages";
+import type { Project, ProjectMember } from "@/lib/project/types";
 
-/* ─── Mock data (replace with API when available) ─── */
-const MOCK_PM = [
-  { user_id: 1, label: "Chavapon S." },
-  { user_id: 2, label: "Apinya W." },
-  { user_id: 3, label: "Natthapol K." },
-];
-const MOCK_PC = [
-  { user_id: 4, label: "Siriporn T." },
-  { user_id: 5, label: "Wanchai P." },
-  { user_id: 6, label: "Rattana M." },
-];
+interface EmployeeSummary {
+  email: string;
+  is_active: boolean;
+}
+
 const MOCK_DEPT = [
   { id: "IT", label: "เทคโนโลยีสารสนเทศ" },
   { id: "FIN", label: "การเงิน" },
@@ -53,21 +50,9 @@ function Field({ id, label, subLabel, required, error, children }: FieldProps) {
 const inputCls = (hasError: boolean) =>
   `form-input ${hasError ? "border-danger" : ""}`;
 
-const selectCls = (hasError: boolean) =>
-  `${inputCls(hasError)} appearance-none pr-10`;
-
-const ChevronDown = () => (
-  <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-text-secondary">
-    <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden>
-      <path d="M2 4l4 4 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  </span>
-);
-
 /* ─── Page ─── */
 interface FormValues {
   name: string;
-  budget: string;
   pm_user_id: string;
   pc_user_id: string;
   department: string;
@@ -78,26 +63,28 @@ interface FormValues {
 
 interface FormErrors {
   name?: string;
-  budget?: string;
   pm_user_id?: string;
   pc_user_id?: string;
 }
 
 const FIELD_IDS: Record<keyof FormErrors, string> = {
   name: "project-name",
-  budget: "project-budget",
   pm_user_id: "project-pm",
   pc_user_id: "project-pc",
 };
 
 export default function CreateProjectPage() {
   const router = useRouter();
-  const { getToken } = useAuth();
+  const { getToken, user, isLoading: isAuthLoading } = useAuth();
   const formRef = useRef<HTMLFormElement>(null);
+  const [pmOptions, setPmOptions] = useState<ProjectMember[]>([]);
+  const [pcOptions, setPcOptions] = useState<ProjectMember[]>([]);
+  const [isLoadingAssignees, setIsLoadingAssignees] = useState(true);
+  const [assigneeError, setAssigneeError] = useState<string | null>(null);
+  const [assigneeReload, setAssigneeReload] = useState(0);
 
   const [values, setValues] = useState<FormValues>({
     name: "",
-    budget: "",
     pm_user_id: "",
     pc_user_id: "",
     department: "",
@@ -109,6 +96,70 @@ export default function CreateProjectPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (isAuthLoading) return;
+    const controller = new AbortController();
+    let active = true;
+    const timeout = window.setTimeout(() => controller.abort(), 30_000);
+
+    async function loadAssignees() {
+      try {
+        if (user?.role_code !== "ADMIN") {
+          throw new Error("เฉพาะผู้ดูแลระบบเท่านั้นที่โหลดรายชื่อผู้รับผิดชอบได้");
+        }
+        const token = await getToken();
+        if (!token) throw new Error("เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่");
+
+        const [employees, projects] = await Promise.all([
+          fetchAllPages<EmployeeSummary>("/api/employees", new URLSearchParams(), token, controller.signal),
+          fetchAllPages<Project>("/api/projects", new URLSearchParams(), token, controller.signal),
+        ]);
+        const activeEmails = new Set(
+          employees.filter((employee) => employee.is_active).map((employee) => employee.email.trim().toLowerCase()),
+        );
+        const activePMs = new Map<number, ProjectMember>();
+        const activePCs = new Map<number, ProjectMember>();
+
+        for (const project of projects) {
+          if (activeEmails.has(project.pm.email.trim().toLowerCase())) {
+            activePMs.set(project.pm.user_id, project.pm);
+          }
+          if (project.pc && activeEmails.has(project.pc.email.trim().toLowerCase())) {
+            activePCs.set(project.pc.user_id, project.pc);
+          }
+        }
+
+        const sortByName = (a: ProjectMember, b: ProjectMember) =>
+          `${a.first_name} ${a.last_name}`.localeCompare(`${b.first_name} ${b.last_name}`, "th");
+        if (active) {
+          setPmOptions([...activePMs.values()].sort(sortByName));
+          setPcOptions([...activePCs.values()].sort(sortByName));
+          setAssigneeError(null);
+        }
+      } catch (error) {
+        if (active) {
+          setAssigneeError(
+            controller.signal.aborted
+              ? "โหลดรายชื่อใช้เวลานานเกินไป กรุณาลองอีกครั้ง"
+              : error instanceof Error
+                ? error.message
+                : "โหลดรายชื่อผู้รับผิดชอบไม่สำเร็จ",
+          );
+        }
+      } finally {
+        window.clearTimeout(timeout);
+        if (active) setIsLoadingAssignees(false);
+      }
+    }
+
+    loadAssignees();
+    return () => {
+      active = false;
+      controller.abort();
+      window.clearTimeout(timeout);
+    };
+  }, [assigneeReload, getToken, isAuthLoading, user?.role_code]);
+
   function set(field: keyof FormValues, value: string) {
     setValues((prev) => ({ ...prev, [field]: value }));
     if (errors[field as keyof FormErrors]) {
@@ -119,11 +170,6 @@ export default function CreateProjectPage() {
   function validate(): FormErrors {
     const e: FormErrors = {};
     if (!values.name.trim()) e.name = "กรุณาระบุชื่อโปรเจค";
-    if (!values.budget.trim()) {
-      e.budget = "กรุณาระบุงบประมาณ";
-    } else if (!/^\d+(\.\d{1,2})?$/.test(values.budget.trim())) {
-      e.budget = "งบประมาณต้องเป็นตัวเลข เช่น 150000.00";
-    }
     if (!values.pm_user_id) e.pm_user_id = "กรุณาเลือกผู้จัดการโปรเจค";
     if (!values.pc_user_id) e.pc_user_id = "กรุณาเลือกผู้ประสานงานโปรเจค";
     return e;
@@ -145,13 +191,8 @@ export default function CreateProjectPage() {
     try {
       const token = await getToken();
 
-      // Format budget as decimal string e.g. "150000.00"
-      const budgetNum = parseFloat(values.budget.trim());
-      const budgetStr = budgetNum.toFixed(2);
-
       const body: Record<string, unknown> = {
         name: values.name.trim(),
-        budget: budgetStr,
         pm_user_id: Number(values.pm_user_id),
         pc_user_id: Number(values.pc_user_id),
       };
@@ -201,7 +242,7 @@ export default function CreateProjectPage() {
         <div className="py-8 space-y-8">
           <h2 className="text-xl font-medium leading-7">ข้อมูลโครงการ</h2>
 
-          {/* Row 1: Project Name + Budget */}
+          {/* Row 1: Project Name */}
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <Field
               id="project-name"
@@ -225,27 +266,6 @@ export default function CreateProjectPage() {
               />
             </Field>
 
-            <Field
-              id="project-budget"
-              label="งบประมาณ"
-              subLabel="Budget (THB)"
-              required
-              error={errors.budget}
-            >
-              <input
-                type="text"
-                inputMode="decimal"
-                id="project-budget"
-                required
-                aria-invalid={!!errors.budget}
-                aria-describedby={`project-budget-hint${errors.budget ? " project-budget-error" : ""}`}
-                value={values.budget}
-                onChange={(e) => set("budget", e.target.value)}
-                placeholder="เช่น 150000.00"
-                className={inputCls(!!errors.budget)}
-                disabled={isSubmitting}
-              />
-            </Field>
           </div>
 
           <h2 className="border-t border-border pt-8 text-xl font-medium leading-7">ผู้รับผิดชอบ</h2>
@@ -258,24 +278,19 @@ export default function CreateProjectPage() {
               required
               error={errors.pm_user_id}
             >
-              <div className="relative">
-                <select
-                  id="project-pm"
-                  required
-                  aria-invalid={!!errors.pm_user_id}
-                  aria-describedby={`project-pm-hint${errors.pm_user_id ? " project-pm-error" : ""}`}
-                  value={values.pm_user_id}
-                  onChange={(e) => set("pm_user_id", e.target.value)}
-                  className={selectCls(!!errors.pm_user_id)}
-                  disabled={isSubmitting}
-                >
-                  <option value="">กรุณาเลือก</option>
-                  {MOCK_PM.map((m) => (
-                    <option key={m.user_id} value={m.user_id}>{m.label}</option>
-                  ))}
-                </select>
-                <ChevronDown />
-              </div>
+              <DropdownSelect
+                id="project-pm"
+                label="ผู้จัดการโปรเจค (PM)"
+                value={values.pm_user_id}
+                options={pmOptions.map((person) => ({ label: `${person.first_name} ${person.last_name}`, value: String(person.user_id) }))}
+                onChange={(value) => set("pm_user_id", value)}
+                placeholder={isLoadingAssignees ? "กำลังโหลดรายชื่อ…" : pmOptions.length === 0 ? "ไม่พบ PM ที่ active" : "กรุณาเลือก"}
+                showLabel={false}
+                hasError={!!errors.pm_user_id}
+                describedBy={`project-pm-hint${errors.pm_user_id ? " project-pm-error" : ""}`}
+                disabled={isSubmitting || isLoadingAssignees}
+                className="w-full"
+              />
             </Field>
 
             <Field
@@ -285,46 +300,37 @@ export default function CreateProjectPage() {
               required
               error={errors.pc_user_id}
             >
-              <div className="relative">
-                <select
-                  id="project-pc"
-                  required
-                  aria-invalid={!!errors.pc_user_id}
-                  aria-describedby={`project-pc-hint${errors.pc_user_id ? " project-pc-error" : ""}`}
-                  value={values.pc_user_id}
-                  onChange={(e) => set("pc_user_id", e.target.value)}
-                  className={selectCls(!!errors.pc_user_id)}
-                  disabled={isSubmitting}
-                >
-                  <option value="">กรุณาเลือก</option>
-                  {MOCK_PC.map((m) => (
-                    <option key={m.user_id} value={m.user_id}>{m.label}</option>
-                  ))}
-                </select>
-                <ChevronDown />
-              </div>
+              <DropdownSelect
+                id="project-pc"
+                label="ผู้ประสานงานโปรเจค (PC)"
+                value={values.pc_user_id}
+                options={pcOptions.map((person) => ({ label: `${person.first_name} ${person.last_name}`, value: String(person.user_id) }))}
+                onChange={(value) => set("pc_user_id", value)}
+                placeholder={isLoadingAssignees ? "กำลังโหลดรายชื่อ…" : pcOptions.length === 0 ? "ไม่พบ PC ที่ active" : "กรุณาเลือก"}
+                showLabel={false}
+                hasError={!!errors.pc_user_id}
+                describedBy={`project-pc-hint${errors.pc_user_id ? " project-pc-error" : ""}`}
+                disabled={isSubmitting || isLoadingAssignees}
+                className="w-full"
+              />
             </Field>
           </div>
 
           {/* Department */}
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <Field id="project-department" label="หน่วยงาน / แผนก" subLabel="Department">
-              <div className="relative">
-                <select
-                  id="project-department"
-                  aria-describedby="project-department-hint"
-                  value={values.department}
-                  onChange={(e) => set("department", e.target.value)}
-                  className={selectCls(false)}
-                  disabled={isSubmitting}
-                >
-                  <option value="">กรุณาเลือก</option>
-                  {MOCK_DEPT.map((d) => (
-                    <option key={d.id} value={d.id}>{d.label}</option>
-                  ))}
-                </select>
-                <ChevronDown />
-              </div>
+              <DropdownSelect
+                id="project-department"
+                label="หน่วยงาน / แผนก"
+                value={values.department}
+                options={MOCK_DEPT.map((department) => ({ label: department.label, value: department.id }))}
+                onChange={(value) => set("department", value)}
+                placeholder="กรุณาเลือก"
+                showLabel={false}
+                describedBy="project-department-hint"
+                disabled={isSubmitting}
+                className="w-full"
+              />
             </Field>
           </div>
 
@@ -344,6 +350,21 @@ export default function CreateProjectPage() {
           </Field>
 
           {/* Submit error */}
+          {assigneeError && (
+            <div role="alert" className="notice-error flex flex-wrap items-center gap-3">
+              <span className="flex-1">{assigneeError}</span>
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => {
+                  setIsLoadingAssignees(true);
+                  setAssigneeReload((value) => value + 1);
+                }}
+              >
+                ลองโหลดใหม่
+              </button>
+            </div>
+          )}
           {submitError && (
             <div role="alert" className="notice-error">
               {submitError}
