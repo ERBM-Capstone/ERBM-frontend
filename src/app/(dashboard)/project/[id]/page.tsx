@@ -241,7 +241,6 @@ function AdvanceSection({ title, advances, action }: { title: string; advances: 
 
 function CreateAdvanceDialog({ projectId, onClose, onCreated }: { projectId: number; onClose: () => void; onCreated: () => void }) {
   const { getToken } = useAuth();
-  const [purpose, setPurpose] = useState("");
   const [amount, setAmount] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -256,9 +255,7 @@ function CreateAdvanceDialog({ projectId, onClose, onCreated }: { projectId: num
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const trimmedPurpose = purpose.trim();
     const trimmedAmount = amount.trim();
-    if (!trimmedPurpose) return setError("กรุณาระบุวัตถุประสงค์");
     if (!/^\d{1,13}(\.\d{1,2})?$/.test(trimmedAmount) || Number(trimmedAmount) <= 0) {
       return setError("กรุณาระบุจำนวนเงินมากกว่า 0 และมีทศนิยมไม่เกิน 2 ตำแหน่ง");
     }
@@ -271,7 +268,7 @@ function CreateAdvanceDialog({ projectId, onClose, onCreated }: { projectId: num
       const response = await fetch("/api/advances", {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ project_id: projectId, purpose: trimmedPurpose, amount: trimmedAmount }),
+        body: JSON.stringify({ project_id: projectId, purpose: "เงินทดรองจ่ายโครงการ", amount: trimmedAmount }),
       });
       const result = await response.json().catch(() => {
         throw new Error("ระบบส่งผลการสร้างกลับมาไม่ถูกต้อง");
@@ -296,10 +293,6 @@ function CreateAdvanceDialog({ projectId, onClose, onCreated }: { projectId: num
           <button type="button" className="icon-button -mr-2 -mt-2" aria-label="ปิด" disabled={isSubmitting} onClick={onClose}><LuX size={18} aria-hidden /></button>
         </div>
         <form onSubmit={handleSubmit} className="space-y-5">
-          <div className="space-y-2">
-            <label htmlFor="advance-purpose" className="text-sm font-medium">วัตถุประสงค์</label>
-            <textarea id="advance-purpose" required maxLength={255} rows={3} value={purpose} onChange={(event) => setPurpose(event.target.value)} className="form-input resize-y rounded-lg border border-border bg-white" placeholder="ระบุวัตถุประสงค์การขอเงินทดรอง" />
-          </div>
           <div className="space-y-2">
             <label htmlFor="advance-amount" className="text-sm font-medium">จำนวนเงิน (บาท)</label>
             <input id="advance-amount" required inputMode="decimal" value={amount} onChange={(event) => setAmount(event.target.value)} className="form-input rounded-lg border border-border bg-white" placeholder="เช่น 150000.00" />

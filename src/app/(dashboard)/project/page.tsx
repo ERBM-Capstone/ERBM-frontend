@@ -27,6 +27,7 @@ function ProjectList({ initialQuery, created }: { initialQuery: string; created:
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [advanceLoadError, setAdvanceLoadError] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(created ? "สร้างโปรเจคสำเร็จ" : null);
   const [params, setParams] = useState<ProjectListParams>({ page: 1, page_size: 20, q: initialQuery || undefined });
   const [search, setSearch] = useState(initialQuery);
@@ -56,10 +57,22 @@ function ProjectList({ initialQuery, created }: { initialQuery: string; created:
         if (params.q) projectFilters.set("q", params.q);
         if (params.status) projectFilters.set("status", params.status);
         const advanceFilters = new URLSearchParams({ status: "ACTIVE" });
-        const [allProjects, activeAdvances] = await Promise.all([
-          fetchAllPages<Project>("/api/projects", projectFilters, token, controller.signal),
-          fetchAllPages<ActiveAdvance>("/api/advances", advanceFilters, token, controller.signal),
-        ]);
+        const allProjects = await fetchAllPages<Project>("/api/projects", projectFilters, token, controller.signal);
+        if (!active) return;
+        setProjects(allProjects.map((project) => ({ ...project, active_advance: null })));
+
+        let activeAdvances: ActiveAdvance[];
+        try {
+          activeAdvances = await fetchAllPages<ActiveAdvance>("/api/advances", advanceFilters, token, controller.signal);
+        } catch (advanceError) {
+          if (active && !controller.signal.aborted) {
+            setAdvanceFilter("");
+            setAdvanceLoadError(
+              advanceError instanceof Error ? advanceError.message : "โหลดข้อมูลเงินทดรองไม่สำเร็จ",
+            );
+          }
+          return;
+        }
         const advancesByProject = new Map(activeAdvances.map((advance) => [advance.project.id, advance]));
         const projectsWithAdvances = allProjects.map((project) => ({
           ...project,
@@ -69,6 +82,7 @@ function ProjectList({ initialQuery, created }: { initialQuery: string; created:
         }));
         if (active) {
           setProjects(projectsWithAdvances);
+          setAdvanceLoadError(null);
         }
       } catch (err) {
         if (active) {
@@ -165,16 +179,25 @@ function ProjectList({ initialQuery, created }: { initialQuery: string; created:
             { label: "ทั้งหมด", value: "" },
             { label: "มี", value: "yes" },
             { label: "ไม่มี", value: "no" },
-          ]} onChange={(value) => { setAdvanceFilter(value as "" | "yes" | "no"); setParams((previous) => ({ ...previous, page: 1 })); }} />
+          ]} onChange={(value) => { setAdvanceFilter(value as "" | "yes" | "no"); setParams((previous) => ({ ...previous, page: 1 })); }} disabled={Boolean(advanceLoadError)} placeholder={advanceLoadError ? "โหลดข้อมูลไม่สำเร็จ" : undefined} />
         </div>
       </div>
 
+      {advanceLoadError && (
+        <div role="alert" className="notice-error flex flex-wrap items-center gap-3">
+          <span className="flex-1">แสดงรายการโปรเจกต์ได้ แต่โหลดข้อมูลเงินทดรองไม่สำเร็จ ตัวกรองเงินทดรองจึงใช้ไม่ได้ชั่วคราว</span>
+          <button type="button" className="btn-secondary" onClick={() => { setIsLoading(true); setError(null); setAdvanceLoadError(null); setReloadVersion((version) => version + 1); }}>
+            ลองโหลดใหม่
+          </button>
+        </div>
+      )}
+
       {successMsg && <div role="status" className="notice-success flex items-center gap-3"><LuCheck size={18} className="shrink-0" aria-hidden /><span className="flex-1">{successMsg}</span><button type="button" className="icon-button" onClick={() => setSuccessMsg(null)} aria-label="ปิดข้อความ"><LuX size={16} aria-hidden /></button></div>}
 
-      <ProjectTable projects={pageProjects} isLoading={isLoading} error={error} canEdit={canCreate} onRetry={() => { setIsLoading(true); setError(null); setReloadVersion((version) => version + 1); }} />
+      <ProjectTable projects={pageProjects} isLoading={isLoading} error={error} onRetry={() => { setIsLoading(true); setError(null); setReloadVersion((version) => version + 1); }} />
 
       {meta && !isLoading && !error && (
-        <div className="flex flex-wrap items-center justify-between gap-4 border-t border-border pt-4 text-xs text-text-secondary">
+        <div className="flex flex-wrap items-center justify-between gap-4 pt-4 text-xs text-text-secondary">
           <p role="status">แสดง {meta.total === 0 ? 0 : (meta.page - 1) * meta.per_page + 1}–{Math.min(meta.page * meta.per_page, meta.total)} จาก {meta.total} รายการ</p>
           <div className="flex items-center gap-2">
             <button type="button" className="btn-secondary" disabled={currentPage <= 1} onClick={() => setParams((previous) => ({ ...previous, page: currentPage - 1 }))}>ก่อนหน้า</button>

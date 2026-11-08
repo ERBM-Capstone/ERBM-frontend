@@ -1,12 +1,11 @@
 import Link from "next/link";
 import type { Project } from "@/lib/project/types";
-import { LuBriefcaseBusiness, LuCircleAlert, LuEye, LuPencil, LuRotateCw } from "react-icons/lu";
+import { LuBriefcaseBusiness, LuCircleAlert, LuEye, LuRotateCw } from "react-icons/lu";
 
 interface Props {
   projects: Project[];
   isLoading: boolean;
   error: string | null;
-  canEdit: boolean;
   onRetry: () => void;
 }
 
@@ -19,7 +18,7 @@ function formatThaiDate(dateStr: string | null | undefined): string {
 
 const HEADERS = ["รหัสโปรเจค", "ชื่อโปรเจค", "ผู้จัดการ (PM)", "ผู้ประสานงาน (PC)", "สถานะ", "เงินทดรองที่ใช้งาน", "วันที่เริ่ม"];
 
-export default function ProjectTable({ projects, isLoading, error, canEdit, onRetry }: Props) {
+export default function ProjectTable({ projects, isLoading, error, onRetry }: Props) {
   if (error) {
     return (
       <div className="notice-error flex flex-wrap items-center gap-3">
@@ -43,8 +42,18 @@ export default function ProjectTable({ projects, isLoading, error, canEdit, onRe
   return (
     <div role="region" aria-label="รายการโครงการ เลื่อนแนวนอนเพื่อดูคอลัมน์เพิ่มเติม" tabIndex={0} className="overflow-x-auto" aria-busy={isLoading}>
       {isLoading && <p role="status" className="sr-only">กำลังโหลดโครงการ</p>}
-      <table className="w-full min-w-[960px] text-sm">
+      <table className="w-full min-w-[1120px] table-fixed text-sm">
         <caption className="sr-only">รายการโครงการและผู้รับผิดชอบ</caption>
+        <colgroup>
+          <col className="w-[140px]" />
+          <col className="w-[220px]" />
+          <col className="w-[150px]" />
+          <col className="w-[150px]" />
+          <col className="w-[110px]" />
+          <col className="w-[190px]" />
+          <col className="w-[120px]" />
+          <col className="w-[60px]" />
+        </colgroup>
         <thead>
           <tr className="border-b border-border text-left text-xs font-medium text-text-secondary">
             {HEADERS.map((label) => <th key={label} scope="col" className="whitespace-nowrap px-3 pb-4 font-medium first:pl-0">{label}</th>)}
@@ -56,20 +65,20 @@ export default function ProjectTable({ projects, isLoading, error, canEdit, onRe
             <tr key={i} className="border-b border-border" aria-hidden>
               {Array.from({ length: 8 }).map((_, j) => <td key={j} className="px-3 py-6 first:pl-0"><div className="h-4 animate-pulse rounded bg-surface" /></td>)}
             </tr>
-          )) : projects.map((project) => <ProjectRow key={project.id} project={project} canEdit={canEdit} />)}
+          )) : projects.map((project) => <ProjectRow key={project.id} project={project} />)}
         </tbody>
       </table>
     </div>
   );
 }
 
-function ProjectRow({ project, canEdit }: { project: Project; canEdit: boolean }) {
+function ProjectRow({ project }: { project: Project }) {
   return (
-    <tr className="border-b border-border transition-colors last:border-0 hover:bg-surface/60">
+    <tr className="border-b border-border transition-colors hover:bg-surface/60">
       <td className="py-5 pr-3 align-top text-xs font-medium whitespace-nowrap">{project.project_code}</td>
       <td className="min-w-48 max-w-80 px-3 py-5 align-top"><p className="line-clamp-2 font-medium leading-5" title={project.name}>{project.name}</p></td>
-      <td className="px-3 py-5 align-top">{project.pm.first_name} {project.pm.last_name.charAt(0)}.</td>
-      <td className="px-3 py-5 align-top">{project.pc ? `${project.pc.first_name} ${project.pc.last_name.charAt(0)}.` : <span className="text-text-secondary">—</span>}</td>
+      <td className="break-words px-3 py-5 align-top">{project.pm.first_name} {project.pm.last_name.charAt(0)}.</td>
+      <td className="break-words px-3 py-5 align-top">{project.pc ? `${project.pc.first_name} ${project.pc.last_name.charAt(0)}.` : <span className="text-text-secondary">—</span>}</td>
       <td className="px-3 py-5 align-top">
         <span className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-medium ${project.status === "ACTIVE" ? "bg-status-active-bg text-status-active-text" : "bg-status-closed-bg text-status-closed-text"}`}>
           <span aria-hidden className={`h-1.5 w-1.5 rounded-full ${project.status === "ACTIVE" ? "bg-success" : "bg-neutral"}`} />{project.status === "ACTIVE" ? "ใช้งาน" : "ปิด"}
@@ -80,10 +89,7 @@ function ProjectRow({ project, canEdit }: { project: Project; canEdit: boolean }
       </td>
       <td className="whitespace-nowrap px-3 py-5 align-top text-xs text-text-secondary">{formatThaiDate(project.start_date)}</td>
       <td className="py-3 pl-3 align-top">
-        <div className="flex gap-1">
-          <Link href={`/project/${project.id}`} aria-label={`ดูโครงการ ${project.project_code}`} title="ดูรายละเอียดโครงการ" className="icon-button"><LuEye size={18} aria-hidden /></Link>
-          {canEdit && <button type="button" disabled aria-label={`แก้ไขโครงการ ${project.project_code} ยังไม่พร้อมใช้งาน`} title="แก้ไขโครงการยังไม่พร้อมใช้งาน" className="icon-button disabled:cursor-not-allowed disabled:opacity-40"><LuPencil size={18} aria-hidden /></button>}
-        </div>
+        <Link href={`/project/${project.id}`} aria-label={`ดูโครงการ ${project.project_code}`} title="ดูรายละเอียดโครงการ" className="icon-button"><LuEye size={18} aria-hidden /></Link>
       </td>
     </tr>
   );
