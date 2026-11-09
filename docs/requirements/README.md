@@ -25,8 +25,9 @@ The current repository implements the Next.js frontend scaffold. The business wo
 - The signed paper document is sent to Accounting through the existing business process.
 - Accounting pays the funds through the existing financial process and then confirms that disbursement occurred.
 - Confirmation is a record of actual payment, not an additional business approval.
+- Confirmation requires no extra payment fields in this first implementation; the system records the authenticated Accounting actor and confirmation timestamp in workflow history.
 - Before activation, check whether the same project already has another `Active` advance. If it does, prevent the new advance from becoming `Active`.
-- Successful confirmation changes `Approved` to `Active` and records disbursement details and action history.
+- Successful confirmation changes `Approved` to `Active` and records the Accounting actor, confirmation time, and action history.
 
 ### Expense recording and OCR
 
@@ -74,7 +75,7 @@ The source also proposes an implementation enum, including `PENDING_CLOSING_REVI
 | Concurrent advances | Whether Approved, Closing, or returned-closing advances also prevent another advance; the documented restriction explicitly covers Active. | 5.6 |
 | Amounts and validation | Currency, decimal precision, amount limits, purpose length, dates, project eligibility, and tax requirements. | 5.3, 5.7 |
 | Documents | Template, output format, numbering, regeneration/versioning, and signed-document upload. | 5.4, 5.15 |
-| Disbursement | Required payment fields, supporting evidence, and whether the paid amount must equal the approved amount. | 5.5 |
+| Disbursement | Whether later phases need extra payment fields/evidence or mismatch handling. | 5.5 |
 | Expense correction | Edit/delete windows, receipt reuse, categories/vendor fields, and expense statuses. | 5.7 |
 | Overspending and returns | Whether expenses can exceed the advance, how a negative calculated return is handled, and whether proof of repayment is required. | 5.7, 5.9 |
 | OCR and uploads | Provider, asynchronous processing, failure/manual-entry behavior, languages, file types/limits, confidence, raw result retention, and storage/access. | 5.8, 5.13 |

@@ -2,9 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useId, useMemo, useRef, useState } from "react";
-import { LuFileText, LuFolderClosed, LuSearch, LuX } from "react-icons/lu";
+import { LuCircleAlert, LuFileText, LuFolderClosed, LuSearch, LuX } from "react-icons/lu";
 import DropdownSelect from "@/components/ui/DropdownSelect";
 import { WORKLIST_EXAMPLES, type WorklistExample, type WorklistStatus } from "./example-data";
+import { useAuth } from "@/lib/auth/context";
+import { fetchAllPages } from "@/lib/project/fetch-all-pages";
 
 const FILTERS: { label: string; status: WorklistStatus | "all" }[] = [
   { label: "ทั้งหมด", status: "all" },
@@ -78,7 +80,7 @@ function PreviewDialog({ title, onClose, children }: { title: string; onClose: (
   );
 }
 
-export default function WorklistPage() {
+function PreviewWorklistPage() {
   const [status, setStatus] = useState<WorklistStatus | "all">("all");
   const [query, setQuery] = useState("");
   const [project, setProject] = useState("all");
@@ -245,4 +247,121 @@ export default function WorklistPage() {
       )}
     </div>
   );
+}
+
+interface ApprovedAdvance {
+  id: number;
+  advance_code: string;
+  requester: { first_name: string; last_name: string };
+  project: { project_code: string; name: string };
+  amount: string;
+  status: string;
+  created_at: string;
+}
+
+function AccountingWorklistPage() {
+  const { getToken } = useAuth();
+  const [items, setItems] = useState<ApprovedAdvance[]>([]);
+  const [query, setQuery] = useState("");
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [reloadVersion, setReloadVersion] = useState(0);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    let active = true;
+    const timer = window.setTimeout(() => {
+      async function loadApprovedAdvances() {
+        try {
+          const token = await getToken();
+          if (!token) throw new Error("เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่");
+          const result = await fetchAllPages<ApprovedAdvance>(
+            "/api/advances",
+            new URLSearchParams({ status: "APPROVED" }),
+            token,
+            controller.signal,
+          );
+          if (active) {
+            setItems(result);
+            setError(null);
+          }
+        } catch (loadError) {
+          if (active) setError(loadError instanceof Error ? loadError.message : "โหลดรายการที่รอยืนยันจ่ายไม่สำเร็จ");
+        } finally {
+          if (active) setIsLoading(false);
+        }
+      }
+      void loadApprovedAdvances();
+    }, 0);
+
+    return () => {
+      active = false;
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [getToken, reloadVersion]);
+
+  const filteredItems = items.filter((item) =>
+    `${item.advance_code} ${item.project.project_code} ${item.project.name} ${item.requester.first_name} ${item.requester.last_name}`
+      .toLocaleLowerCase()
+      .includes(query.trim().toLocaleLowerCase()),
+  );
+
+  return (
+    <div className="space-y-6">
+      <header>
+        <h1 className="text-2xl font-bold leading-8">ยืนยันการจ่ายเงินทดรอง</h1>
+        <p className="mt-1 text-sm text-text-secondary">รายการที่ PM อนุมัติแล้วและรอ Accounting ยืนยันการจ่ายเงินจริง</p>
+      </header>
+
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border pb-4">
+        <label htmlFor="accounting-advance-search" className="sr-only">ค้นหารหัสคำขอหรือโปรเจค</label>
+        <div className="relative min-w-64 flex-1 sm:max-w-xl">
+          <LuSearch size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-neutral" aria-hidden />
+          <input id="accounting-advance-search" type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="ค้นหารหัสคำขอ / โปรเจค / ผู้ขอ" className="form-input h-11 w-full bg-white pl-11" />
+        </div>
+        <p role="status" className="text-sm text-text-secondary">{filteredItems.length} รายการรอจ่าย</p>
+      </div>
+
+      {error ? (
+        <div role="alert" className="notice-error flex flex-wrap items-center gap-3">
+          <LuCircleAlert size={18} aria-hidden /><span className="flex-1">{error}</span>
+          <button type="button" className="btn-secondary" onClick={() => { setIsLoading(true); setError(null); setReloadVersion((value) => value + 1); }}>ลองโหลดใหม่</button>
+        </div>
+      ) : (
+        <div role="region" aria-label="รายการอนุมัติแล้วที่รอยืนยันการจ่าย" className="overflow-x-auto" aria-busy={isLoading}>
+          <table className="w-full min-w-[900px] table-fixed text-sm">
+            <caption className="sr-only">Advance ที่ PM อนุมัติแล้ว รอ Accounting ยืนยันการจ่าย</caption>
+            <thead className="border-b border-border text-left text-xs text-text-secondary">
+              <tr>
+                <th scope="col" className="w-[18%] px-3 py-3 font-medium">รหัสคำขอ</th>
+                <th scope="col" className="w-[32%] px-3 py-3 font-medium">โปรเจค</th>
+                <th scope="col" className="w-[18%] px-3 py-3 font-medium">ผู้ขอ</th>
+                <th scope="col" className="w-[17%] px-3 py-3 text-right font-medium">จำนวนเงิน</th>
+                <th scope="col" className="w-[15%] px-3 py-3 text-right font-medium">รายละเอียด</th>
+              </tr>
+            </thead>
+            <tbody>
+              {isLoading ? Array.from({ length: 4 }).map((_, index) => <tr key={index} className="border-b border-border" aria-hidden><td colSpan={5} className="px-3 py-5"><div className="h-4 animate-pulse rounded bg-surface" /></td></tr>) : filteredItems.map((item) => (
+                <tr key={item.id} className="border-b border-border hover:bg-surface/50">
+                  <td className="px-3 py-5 font-medium">{item.advance_code}</td>
+                  <td className="px-3 py-5"><p className="line-clamp-2 font-medium">{item.project.name}</p><p className="mt-1 text-xs text-text-secondary">{item.project.project_code}</p></td>
+                  <td className="px-3 py-5">{item.requester.first_name} {item.requester.last_name}</td>
+                  <td className="px-3 py-5 text-right font-semibold tabular-nums">฿{Number(item.amount).toLocaleString("th-TH", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                  <td className="px-3 py-5 text-right"><Link href={`/advance/${item.id}`} className="btn-secondary">เปิดคำขอ</Link></td>
+                </tr>
+              ))}
+              {!isLoading && filteredItems.length === 0 && <tr><td colSpan={5} className="px-4 py-16 text-center text-text-secondary">{items.length ? "ไม่พบคำขอที่ตรงกับการค้นหา" : "ไม่มีคำขอที่รอยืนยันการจ่าย"}</td></tr>}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function WorklistPage() {
+  const { user, isLoading } = useAuth();
+  if (isLoading) return <p role="status" className="text-sm text-text-secondary">กำลังโหลด…</p>;
+  return user?.role_code === "ACCOUNTING" ? <AccountingWorklistPage /> : <PreviewWorklistPage />;
 }
